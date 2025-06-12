@@ -12,9 +12,14 @@ export default defineConfig({
     host: true,
     open: true,
     cors: true,
+    strictPort: true,
     headers: {
       'Cross-Origin-Embedder-Policy': 'credentialless',
       'Cross-Origin-Opener-Policy': 'same-origin'
+    },
+    fs: {
+      // Allow serving files from one level up to the project root
+      allow: ['..']
     }
   },
   
@@ -22,7 +27,8 @@ export default defineConfig({
   preview: {
     port: 8080,
     host: true,
-    open: true
+    open: true,
+    strictPort: true
   },
   
   // Build configuration
@@ -76,5 +82,8 @@ export default defineConfig({
   // Worker configuration
   worker: {
     format: 'es'
-  }
+  },
+
+  // Public directory configuration
+  publicDir: 'public'
 }) 

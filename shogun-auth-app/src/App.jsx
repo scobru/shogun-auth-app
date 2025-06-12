@@ -945,6 +945,7 @@ function App() {
     // Listen for scripts ready event
     const handleScriptsReady = () => {
       console.log("📡 Received scriptsReady event")
+      setScriptsReady(true)
       autoInit()
     }
 
@@ -978,75 +979,89 @@ function App() {
     return "status-indicator status-error"
   }
 
-  const InitializationSection = () => (
-    <div className="action-group fade-in">
-      <h2>⚡ Inizializzazione</h2>
-      <p>Initialize the Shogun SDK and test connections</p>
+  const InitializationSection = () => {
+    const gunLoaded = typeof window.Gun !== 'undefined'
+    const shogunLoaded = typeof window.initShogunBrowser !== 'undefined'
+    const allReady = gunLoaded && shogunLoaded
 
-      <div className="user-status-display" style={{ marginBottom: "var(--spacing-md)" }}>
-        <div className="status-row">
-          <strong>Gun.js: </strong>
-          <span className={typeof window.Gun !== 'undefined' ? "status-indicator status-success" : "status-indicator status-error"}>
-            {typeof window.Gun !== 'undefined' ? "✅ Loaded" : "❌ Loading..."}
-          </span>
-        </div>
-        <div className="status-row">
-          <strong>Shogun Core: </strong>
-          <span className={typeof window.initShogunBrowser !== 'undefined' ? "status-indicator status-success" : "status-indicator status-error"}>
-            {typeof window.initShogunBrowser !== 'undefined' ? "✅ Loaded" : "❌ Loading..."}
-          </span>
-        </div>
-        <div className="status-row">
-          <strong>Shogun Status: </strong>
-          <span className={initialized ? "status-indicator status-success" : "status-indicator status-warning"}>
-            {initialized ? "✅ Initialized" : "⏳ Not initialized"}
-          </span>
-        </div>
-      </div>
+    return (
+      <div className="action-group fade-in">
+        <h2>⚡ Inizializzazione</h2>
+        <p>Initialize the Shogun SDK and test connections</p>
 
-      <div className="form-actions">
-        <button
-          className={`primary-button ${loading ? "disabled" : ""}`}
-          onClick={handleInitialize}
-          disabled={loading || typeof window.Gun === 'undefined' || typeof window.initShogunBrowser === 'undefined'}
-          type="button"
-        >
-          {loading ? (
-            <>
-              <span className="loading"></span>
-              Initializing...
-            </>
-          ) : initialized ? (
-            "✅ Re-initialize"
-          ) : (
-            "Initialize Shogun"
-          )}
-        </button>
-
-        <button
-          className="action-button warning-button"
-          onClick={clearAllStorage}
-          type="button"
-        >
-          🗑️ Clear Storage
-        </button>
-      </div>
-
-      <div className="user-status-display">
-        <div className="status-row">
-          <strong>Auth Status: </strong>
-          <span className={getAuthStatusClass(authStatus)}>
-            {authStatus}
-          </span>
-        </div>
-        {userInfo && (
-          <div className="user-info">
-            {userInfo}
+        <div className="user-status-display" style={{ marginBottom: "var(--spacing-md)" }}>
+          <div className="status-row">
+            <strong>Gun.js: </strong>
+            <span className={gunLoaded ? "status-indicator status-success" : "status-indicator status-error"}>
+              {gunLoaded ? "✅ Loaded" : "⏳ Loading..."}
+            </span>
           </div>
-        )}
+          <div className="status-row">
+            <strong>Shogun Core: </strong>
+            <span className={shogunLoaded ? "status-indicator status-success" : "status-indicator status-error"}>
+              {shogunLoaded ? "✅ Loaded" : "⏳ Loading..."}
+            </span>
+          </div>
+          <div className="status-row">
+            <strong>Ready Status: </strong>
+            <span className={allReady ? "status-indicator status-success" : "status-indicator status-warning"}>
+              {allReady ? "✅ All dependencies ready" : "⏳ Waiting for scripts..."}
+            </span>
+          </div>
+          <div className="status-row">
+            <strong>Shogun Status: </strong>
+            <span className={initialized ? "status-indicator status-success" : "status-indicator status-warning"}>
+              {initialized ? "✅ Initialized" : "❌ Not initialized"}
+            </span>
+          </div>
+        </div>
+
+        <div className="form-actions">
+          <button
+            className={`primary-button ${loading ? "disabled" : ""}`}
+            onClick={handleInitialize}
+            disabled={loading || !allReady}
+            type="button"
+          >
+            {loading ? (
+              <>
+                <span className="loading"></span>
+                Initializing...
+              </>
+            ) : initialized ? (
+              "✅ Re-initialize"
+            ) : !allReady ? (
+              "⏳ Waiting for dependencies..."
+            ) : (
+              "Initialize Shogun"
+            )}
+          </button>
+
+          <button
+            className="action-button warning-button"
+            onClick={clearAllStorage}
+            type="button"
+          >
+            🗑️ Clear Storage
+          </button>
+        </div>
+
+        <div className="user-status-display">
+          <div className="status-row">
+            <strong>Auth Status: </strong>
+            <span className={getAuthStatusClass(authStatus)}>
+              {authStatus}
+            </span>
+          </div>
+          {userInfo && (
+            <div className="user-info">
+              {userInfo}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   const TraditionalAuthSection = () => (
     <div className="action-group fade-in">

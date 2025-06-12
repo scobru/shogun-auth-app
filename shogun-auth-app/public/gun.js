@@ -8,27 +8,32 @@
     return
   }
 
-  console.log('Loading Gun.js from local fallback...')
+  console.log('Loading Gun.js from CDN...')
 
   // Create script element for Gun.js
   const script = document.createElement('script')
-  script.src = '/node_modules/gun/dist/gun.js'
+  script.src = 'https://cdn.skypack.dev/gun@0.2020.1240'
   script.onload = function() {
-    console.log('✅ Gun.js loaded from node_modules')
+    console.log('✅ Gun.js loaded from CDN')
     
-    // Load wire.js after gun.js
-    const wireScript = document.createElement('script')
-    wireScript.src = '/node_modules/gun/dist/lib/wire.js'
-    wireScript.onload = function() {
-      console.log('✅ Gun Wire loaded from node_modules')
+    // Gun.js loaded successfully, check if we need additional modules
+    if (typeof window.Gun !== 'undefined') {
+      console.log('✅ Gun.js is ready')
     }
-    wireScript.onerror = function() {
-      console.warn('⚠️ Could not load Gun Wire from node_modules')
-    }
-    document.head.appendChild(wireScript)
   }
   script.onerror = function() {
-    console.error('❌ Could not load Gun.js from any source')
+    console.error('❌ Could not load Gun.js from CDN, trying backup...')
+    
+    // Try backup CDN
+    const backupScript = document.createElement('script')
+    backupScript.src = 'https://unpkg.com/gun@0.2020.1240/dist/gun.js'
+    backupScript.onload = function() {
+      console.log('✅ Gun.js loaded from backup CDN')
+    }
+    backupScript.onerror = function() {
+      console.error('❌ Could not load Gun.js from any source')
+    }
+    document.head.appendChild(backupScript)
   }
   
   document.head.appendChild(script)

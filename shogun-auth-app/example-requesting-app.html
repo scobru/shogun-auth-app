@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Example Shogun App - Proof Requester</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #007aff;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #86868b;
+            font-size: 1.1rem;
+        }
+        .proof-section {
+            border: 2px solid #e5e5ea;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .proof-section.authenticated {
+            border-color: #34c759;
+            background: rgba(52, 199, 89, 0.05);
+        }
+        button {
+            background: #007aff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #0056cc;
+        }
+        button:disabled {
+            background: #c7c7cc;
+            cursor: not-allowed;
+        }
+        .proof-result {
+            background: #f9f9fb;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status.waiting {
+            background: rgba(255, 149, 0, 0.1);
+            color: #ff9500;
+        }
+        .status.verified {
+            background: rgba(52, 199, 89, 0.1);
+            color: #34c759;
+        }
+        .status.failed {
+            background: rgba(255, 59, 48, 0.1);
+            color: #ff3b30;
+        }
+        .info-box {
+            background: #f0f8ff;
+            border-left: 4px solid #007aff;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .code-snippet {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🚀 Example Shogun App</h1>
+            <p class="subtitle">Demonstrating Cross-App Authentication with Proof Requests</p>
+        </div>
+
+        <div class="info-box">
+            <h4>🔍 How it works:</h4>
+            <p>This app demonstrates the Sismo-like proof request flow:</p>
+            <ol>
+                <li>Click a "Request Proof" button below</li>
+                <li>Shogun Auth app opens in a popup</li>
+                <li>Login in the auth app if not already logged in</li>
+                <li>Approve or reject the proof request</li>
+                <li>The proof is sent back to this app</li>
+            </ol>
+        </div>
+
+        <div class="proof-section" id="authentication-section">
+            <h3>🔐 Authentication Required</h3>
+            <p>This app requires proof that you have authenticated with a supported method.</p>
+            <button onclick="requestAuthProof()">Request Authentication Proof</button>
+            <div id="authentication-status">
+                <span class="status waiting">Not Authenticated</span>
+            </div>
+            <div id="authentication-result" class="proof-result" style="display: none;"></div>
+        </div>
+
+        <div class="proof-section" id="web3-section">
+            <h3>🦊 Ethereum Wallet Required</h3>
+            <p>Prove you have an Ethereum wallet without revealing your address.</p>
+            <button onclick="requestWeb3Proof()">Request Web3 Proof (Zero Knowledge)</button>
+            <div id="web3-status">
+                <span class="status waiting">Not Verified</span>
+            </div>
+            <div id="web3-result" class="proof-result" style="display: none;"></div>
+        </div>
+
+        <div class="proof-section" id="membership-section">
+            <h3>🎖️ Membership Verification</h3>
+            <p>Prove you're a member of our community with selective disclosure.</p>
+            <button onclick="requestMembershipProof()">Request Membership Proof</button>
+            <div id="membership-status">
+                <span class="status waiting">Not Verified</span>
+            </div>
+            <div id="membership-result" class="proof-result" style="display: none;"></div>
+        </div>
+
+        <div class="proof-section" id="session-section">
+            <h3>🎫 Session Management</h3>
+            <p>Request a session token for seamless access.</p>
+            <button onclick="requestSessionToken()">Request Session Token</button>
+            <div id="session-status">
+                <span class="status waiting">No Session</span>
+            </div>
+            <div id="session-result" class="proof-result" style="display: none;"></div>
+        </div>
+
+        <div class="info-box">
+            <h4>💡 Developer Info:</h4>
+            <p>Check the browser console to see the message exchange between apps.</p>
+            <div class="code-snippet">
+// Example proof request message:
+{
+  type: 'shogun:proof-request',
+  data: {
+    id: 'req_12345',
+    type: 'authentication',
+    requirements: { authMethods: ['web3', 'webauthn'] },
+    privacy: 'zero_knowledge'
+  }
+}
+
+// Example proof response:
+{
+  type: 'shogun:proof-response', 
+  data: {
+    requestId: 'req_12345',
+    success: true,
+    proof: { type: 'zk-proof', data: '0x...' }
+  }
+}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const SHOGUN_AUTH_URL = 'http://localhost:8080'; // URL of shogun-auth-app
+        const APP_NAME = 'Example Shogun App';
+        const APP_DESCRIPTION = 'A demo app showing cross-app authentication';
+
+        // Global state
+        let authWindow = null;
+        let pendingRequests = new Map();
+
+        // Listen for proof responses
+        window.addEventListener('message', (event) => {
+            try {
+                const { type, data } = event.data;
+                
+                console.log('📨 Received message:', { type, data, origin: event.origin });
+                
+                if (type === 'shogun:proof-response') {
+                    handleProofResponse(data);
+                } else if (type === 'shogun:session-verified') {
+                    handleSessionVerification(data);
+                }
+            } catch (error) {
+                console.error('Error handling message:', error);
+            }
+        });
+
+        // Generate unique request ID
+        function generateRequestId() {
+            return 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Open auth app in popup
+        function openAuthApp() {
+            if (authWindow && !authWindow.closed) {
+                authWindow.focus();
+                return authWindow;
+            }
+
+            authWindow = window.open(
+                SHOGUN_AUTH_URL,
+                'shogun-auth',
+                'width=1200,height=800,scrollbars=yes,resizable=yes'
+            );
+
+            return authWindow;
+        }
+
+        // Send proof request
+        function sendProofRequest(request) {
+            const targetWindow = openAuthApp();
+            
+            console.log('🚀 Sending proof request:', request);
+            
+            // Wait a bit for the window to load
+            setTimeout(() => {
+                if (targetWindow && !targetWindow.closed) {
+                    targetWindow.postMessage({
+                        type: 'shogun:proof-request',
+                        data: request
+                    }, SHOGUN_AUTH_URL);
+                    
+                    // Store pending request
+                    pendingRequests.set(request.id, request);
+                    console.log('📤 Proof request sent, waiting for response...');
+                } else {
+                    console.error('❌ Could not send message: auth window not available');
+                }
+            }, 2000);
+        }
+
+        // Handle proof response
+        function handleProofResponse(response) {
+            console.log('✅ Received proof response:', response);
+            
+            const { requestId, success, proof, error } = response;
+            const request = pendingRequests.get(requestId);
+            
+            if (!request) {
+                console.warn('⚠️ Received response for unknown request:', requestId);
+                return;
+            }
+
+            // Update UI based on request type
+            const sectionId = request.type + '-section';
+            const statusId = request.type + '-status';
+            const resultId = request.type + '-result';
+
+            const section = document.getElementById(sectionId);
+            const statusEl = document.getElementById(statusId);
+            const resultEl = document.getElementById(resultId);
+
+            if (success && proof) {
+                // Mark as verified
+                section.classList.add('authenticated');
+                statusEl.innerHTML = '<span class="status verified">✅ Verified</span>';
+                
+                // Show proof details
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = `
+                    <strong>Proof Type:</strong> ${proof.type}<br>
+                    <strong>Generated:</strong> ${new Date(response.metadata.generatedAt).toLocaleString()}<br>
+                    <strong>Expires:</strong> ${new Date(response.metadata.expiresAt).toLocaleString()}<br>
+                    <strong>Data Preview:</strong> ${proof.data.substring(0, 40)}...<br>
+                    <strong>Full Data:</strong><br>
+                    <pre style="white-space: pre-wrap; word-wrap: break-word;">${JSON.stringify(proof, null, 2)}</pre>
+                `;
+
+                // Store proof for future use
+                localStorage.setItem(`shogun_proof_${request.type}`, JSON.stringify({
+                    proof,
+                    metadata: response.metadata
+                }));
+
+            } else {
+                // Mark as failed
+                statusEl.innerHTML = '<span class="status failed">❌ Failed</span>';
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = `<strong>Error:</strong> ${error || 'Unknown error'}`;
+            }
+
+            // Clean up
+            pendingRequests.delete(requestId);
+        }
+
+        // Request authentication proof
+        function requestAuthProof() {
+            const request = {
+                id: generateRequestId(),
+                type: 'authentication',
+                requirements: {
+                    authMethods: ['web3', 'webauthn', 'nostr', 'password']
+                },
+                requestingApp: {
+                    name: APP_NAME,
+                    description: APP_DESCRIPTION + ' - Verify you are authenticated'
+                },
+                privacy: 'zero_knowledge'
+            };
+
+            updateStatusToWaiting('authentication-status');
+            sendProofRequest(request);
+        }
+
+        // Request Web3 proof
+        function requestWeb3Proof() {
+            const request = {
+                id: generateRequestId(),
+                type: 'web3',
+                requirements: {
+                    authMethods: ['web3'],
+                    hasAddress: true
+                },
+                requestingApp: {
+                    name: APP_NAME,
+                    description: APP_DESCRIPTION + ' - Verify you have an Ethereum wallet'
+                },
+                privacy: 'zero_knowledge'
+            };
+
+            updateStatusToWaiting('web3-status');
+            sendProofRequest(request);
+        }
+
+        // Request membership proof
+        function requestMembershipProof() {
+            const request = {
+                id: generateRequestId(),
+                type: 'membership',
+                requirements: {
+                    authMethods: ['web3', 'webauthn', 'nostr'],
+                    customClaims: {
+                        communityMember: true
+                    }
+                },
+                requestingApp: {
+                    name: APP_NAME,
+                    description: APP_DESCRIPTION + ' - Verify community membership'
+                },
+                privacy: 'selective_disclosure'
+            };
+
+            updateStatusToWaiting('membership-status');
+            sendProofRequest(request);
+        }
+
+        // Request session token
+        function requestSessionToken() {
+            const request = {
+                id: generateRequestId(),
+                type: 'session',
+                requirements: {
+                    authMethods: ['web3', 'webauthn', 'nostr', 'password']
+                },
+                requestingApp: {
+                    name: APP_NAME,
+                    description: APP_DESCRIPTION + ' - Create session for seamless access'
+                },
+                privacy: 'full_disclosure'
+            };
+
+            updateStatusToWaiting('session-status');
+            sendProofRequest(request);
+        }
+
+        // Update status to waiting
+        function updateStatusToWaiting(statusId) {
+            const statusEl = document.getElementById(statusId);
+            statusEl.innerHTML = '<span class="status waiting">⏳ Waiting for user...</span>';
+        }
+
+        // Handle session verification
+        function handleSessionVerification(data) {
+            console.log('🎫 Session verification result:', data);
+            
+            const { token, valid } = data;
+            const statusEl = document.getElementById('session-status');
+            const resultEl = document.getElementById('session-result');
+
+            if (valid) {
+                statusEl.innerHTML = '<span class="status verified">✅ Session Active</span>';
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = `<strong>Session Token:</strong> ${token.substring(0, 20)}...`;
+            } else {
+                statusEl.innerHTML = '<span class="status failed">❌ Invalid Session</span>';
+            }
+        }
+
+        // Check for existing proofs on load
+        window.addEventListener('load', () => {
+            console.log('🚀 Example Shogun App loaded');
+            console.log('📡 Listening for proofs from:', SHOGUN_AUTH_URL);
+            
+            ['authentication', 'web3', 'membership', 'session'].forEach(type => {
+                const stored = localStorage.getItem(`shogun_proof_${type}`);
+                if (stored) {
+                    try {
+                        const { proof, metadata } = JSON.parse(stored);
+                        
+                        // Check if proof is still valid
+                        if (metadata.expiresAt && Date.now() < metadata.expiresAt) {
+                            const section = document.getElementById(type + '-section');
+                            const statusEl = document.getElementById(type + '-status');
+                            const resultEl = document.getElementById(type + '-result');
+
+                            section.classList.add('authenticated');
+                            statusEl.innerHTML = '<span class="status verified">✅ Previously Verified</span>';
+                            resultEl.style.display = 'block';
+                            resultEl.innerHTML = `
+                                <strong>Cached Proof:</strong> ${proof.type}<br>
+                                <strong>Expires:</strong> ${new Date(metadata.expiresAt).toLocaleString()}<br>
+                                <em>This proof was verified previously and is still valid.</em>
+                            `;
+                        } else {
+                            // Remove expired proof
+                            localStorage.removeItem(`shogun_proof_${type}`);
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Error loading stored proof:', error);
+                        localStorage.removeItem(`shogun_proof_${type}`);
+                    }
+                }
+            });
+        });
+
+        // Debug function to clear all stored proofs
+        function clearAllProofs() {
+            ['authentication', 'web3', 'membership', 'session'].forEach(type => {
+                localStorage.removeItem(`shogun_proof_${type}`);
+            });
+            location.reload();
+        }
+
+        // Make debug function available globally
+        window.clearAllProofs = clearAllProofs;
+        
+        console.log('💡 Debug tip: Call clearAllProofs() in console to reset all proofs');
+    </script>
+</body>
+</html> 
