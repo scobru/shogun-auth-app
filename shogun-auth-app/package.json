@@ -1,7 +1,7 @@
 {
-  "name": "shogun-core-examples",
+  "name": "shogun-auth-app-react",
   "version": "1.0.0",
-  "description": "Practical examples for Shogun Core with NoDom",
+  "description": "Shogun authentication app with React",
   "type": "module",
   "main": "index.html",
   "scripts": {
@@ -10,14 +10,13 @@
     "preview": "vite preview",
     "serve": "vite preview --port 8080",
     "start": "vite --port 8080",
-    "auth": "echo \"Open http://localhost:8080/auth-nodom.html for authentication\"",
-    "legacy": "echo \"Open http://localhost:8080/auth.html for legacy version\"",
-    "help": "echo \"Available scripts: dev, build, preview, serve, start, auth, legacy\""
+    "auth": "echo \"Open http://localhost:8080 for authentication\"",
+    "help": "echo \"Available scripts: dev, build, preview, serve, start, auth\""
   },
   "keywords": [
     "shogun",
     "authentication",
-    "nodom",
+    "react",
     "reactive",
     "gun",
     "webauthn",
@@ -28,7 +27,15 @@
   ],
   "author": "Shogun Team",
   "license": "MIT",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "gun": "^0.2020.1240"
+  },
   "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
     "@vitejs/plugin-legacy": "^5.0.0",
     "terser": "^5.24.0",
     "vite": "^5.0.0"
@@ -48,9 +55,5 @@
     "> 1%",
     "last 2 versions",
     "not dead"
-  ],
-  "dependencies": {
-    "gun": "^0.2020.1240",
-    "vercel": "^42.3.0"
-  }
+  ]
 }

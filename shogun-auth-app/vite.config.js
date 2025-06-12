@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-import legacy from '@vitejs/plugin-legacy'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   // Base configuration
@@ -45,11 +45,7 @@ export default defineConfig({
   },
   
   // Plugins
-  plugins: [
-    legacy({
-      targets: ['defaults', 'not IE 11']
-    })
-  ],
+  plugins: [react()],
   
   // Optimizations
   optimizeDeps: {
@@ -60,7 +56,8 @@ export default defineConfig({
   // Define global constants
   define: {
     __DEV__: JSON.stringify(process.env.NODE_ENV === 'development'),
-    __VERSION__: JSON.stringify(process.env.npm_package_version)
+    __VERSION__: JSON.stringify(process.env.npm_package_version),
+    global: 'globalThis',
   },
   
   // CSS configuration
