@@ -15,13 +15,20 @@ export default defineConfig({
     cors: true,
     strictPort: true,
     headers: {
-      "Cross-Origin-Embedder-Policy": "credentialless",
-      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
     },
     fs: {
       // Allow serving files from one level up to the project root
       allow: [".."],
     },
+    // Handle client-side routing
+    historyApiFallback: {
+      disableDotRule: true,
+      rewrites: [
+        { from: /^\/auth\/callback/, to: '/index.html' },
+        { from: /./, to: '/index.html' }
+      ]
+    }
   },
 
   // Preview server (for built files)
@@ -74,6 +81,13 @@ export default defineConfig({
     __DEV__: JSON.stringify(process.env.NODE_ENV === "development"),
     __VERSION__: JSON.stringify(process.env.npm_package_version),
     global: "globalThis",
+  },
+
+  // Prevent conflicts with wallet extensions
+  esbuild: {
+    define: {
+      global: "globalThis",
+    },
   },
 
   // CSS configuration
