@@ -102,6 +102,26 @@ const OAuthCallback = ({ shogun }) => {
         setStatus('Autenticazione completata con successo! Reindirizzamento...');
         console.log('Authentication successful, scheduling redirect');
         
+        // Store additional authentication info
+        if (authResult.username) {
+          localStorage.setItem('shogun_username', authResult.username);
+          console.log('Saved username to localStorage:', authResult.username);
+        }
+        
+        if (authResult.userPub) {
+          localStorage.setItem('shogun_userpub', authResult.userPub);
+          console.log('Saved userPub to localStorage:', authResult.userPub);
+        }
+        
+        // Set authentication method as zkoauth in localStorage
+        localStorage.setItem('shogun_auth_method', 'zkoauth');
+        console.log('Set auth method in localStorage: zkoauth');
+
+        // Imposta manualmente il flag di autenticazione in sessionStorage
+        // Questo verrà letto all'avvio dell'app dopo il redirect
+        sessionStorage.setItem('shogun_authenticated', 'true');
+        console.log('Set authentication flag in sessionStorage');
+        
         // Clear stored OAuth data
         localStorage.removeItem(`oauth_verifier_${provider}`);
         localStorage.removeItem(`oauth_challenge_${provider}`);

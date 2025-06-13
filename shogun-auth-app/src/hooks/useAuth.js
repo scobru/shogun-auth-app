@@ -6,6 +6,7 @@ export const useAuth = (gunInstance) => {
   const [authStatus, setAuthStatus] = useState({
     isLoggedIn: false,
     method: null,
+    username: null,
     userPub: null,
     error: null
   });
@@ -21,7 +22,7 @@ export const useAuth = (gunInstance) => {
         rpName: "Shogun Auth App",
         timeout: 60000,
       },
-      web3: { enabled: false },
+      web3: { enabled: true }, // Abilitato il supporto per MetaMask
       nostr: { enabled: true },
       "zk-oauth": { 
         enabled: true,
@@ -103,6 +104,90 @@ export const useAuth = (gunInstance) => {
     };
   }, [gunInstance]);
 
+  // Verifica stato autenticazione quando shogun è inizializzato
+  useEffect(() => {
+    if (!shogun) return;
+
+    // Verifica se l'utente è già loggato
+    const checkAuthStatus = async () => {
+      try {
+        // Controlla prima il flag in sessionStorage (impostato da OAuthCallback)
+        const authFlag = sessionStorage.getItem('shogun_authenticated');
+        
+        // Verifica con l'API di Shogun
+        const isLoggedIn = shogun.isLoggedIn() || authFlag === 'true';
+        console.log("Auth check - user logged in:", isLoggedIn, 
+                    "| Shogun says:", shogun.isLoggedIn(), 
+                    "| Auth flag:", authFlag === 'true');
+        
+        if (isLoggedIn) {
+          // Ottieni informazioni utente
+          const userPub = shogun.user?.is?.pub;
+          const username = localStorage.getItem('shogun_username') || userPub;
+          const authMethod = localStorage.getItem('shogun_auth_method') || 'standard';
+          
+          // Aggiorna lo stato di autenticazione
+          setAuthStatus({
+            isLoggedIn: true,
+            username: username,
+            userPub: userPub,
+            method: authMethod,
+            error: null
+          });
+          
+          // Dopo un breve ritardo, prova a chiamare user per assicurarsi che il DB locale sia aggiornato
+          setTimeout(() => {
+            if (shogun.user) {
+              console.log("Refreshing user data after authentication");
+              shogun.user.get("username").once(() => {});  // Questo forzare il refresh dei dati utente
+            }
+          }, 500);
+        }
+      } catch (error) {
+        console.error("Errore nella verifica dello stato di autenticazione:", error);
+      }
+    };
+    
+    // Esegui la verifica
+    checkAuthStatus();
+
+    // Aggiungi listener per eventi di autenticazione
+    shogun.on("auth:login", (data) => {
+      console.log("Auth login event received:", data);
+      setAuthStatus({
+        isLoggedIn: true,
+        username: data.username,
+        userPub: data.userPub,
+        method: data.method || 'standard',
+        error: null
+      });
+      // Salva in localStorage per recupero futuro
+      localStorage.setItem('shogun_username', data.username);
+      localStorage.setItem('shogun_auth_method', data.method || 'standard');
+    });
+
+    shogun.on("auth:logout", () => {
+      console.log("Auth logout event received");
+      setAuthStatus({
+        isLoggedIn: false,
+        username: null,
+        userPub: null,
+        method: null,
+        error: null
+      });
+      localStorage.removeItem('shogun_username');
+      localStorage.removeItem('shogun_auth_method');
+    });
+    
+    return () => {
+      // Rimuovi listener
+      if (shogun) {
+        shogun.off("auth:login");
+        shogun.off("auth:logout");
+      }
+    };
+  }, [shogun]);
+
   // Check available auth methods
   const checkAuthMethods = useCallback(async () => {
     if (!shogun) return { webauthn: false, web3: false, nostr: false, zkoauth: false };
@@ -142,33 +227,41 @@ export const useAuth = (gunInstance) => {
     try {
       let user;
       let result;
+      let authMethod = method;
       
       switch (method) {
         case "password":
           user = await shogun.login(username, password);
+          authMethod = "password";
           break;
         case "webauthn":
           const webauthn = await shogun.getPlugin("webauthn");
           user = await webauthn.signIn(username);
+          authMethod = "webauthn";
           break;
         case "web3":
           const web3 = await shogun.getPlugin("web3");
           const address = await web3.connectMetaMask();
           if (!address) throw new Error("Nessun indirizzo ottenuto");
-          user = await web3.signIn(address);
+          user = await web3.login(address);
+          authMethod = "web3";
           break;
         case "nostr":
           const nostr = await shogun.getPlugin("nostr");
           const pubkey = await nostr.connectBitcoinWallet();
           if (!pubkey) throw new Error("Nessuna chiave pubblica ottenuta");
           user = await nostr.signIn(pubkey);
+          authMethod = "nostr";
           break;
         case "zkoauth":
           const zkoauth = await shogun.getPlugin("zk-oauth");
           result = await zkoauth.login(username || "google");
+          authMethod = "zkoauth";
           
           // If we have a redirect URL, return the result without updating auth status
           if (result.redirectUrl) {
+            // Store the auth method for when we return from OAuth
+            localStorage.setItem('shogun_auth_method', authMethod);
             return result;
           }
           
@@ -178,11 +271,19 @@ export const useAuth = (gunInstance) => {
           throw new Error("Metodo di autenticazione non supportato");
       }
       
+      // Store user public key
+      const userPub = user?.pub || shogun.user?.is?.pub;
+      
       setAuthStatus({
         isLoggedIn: true,
-        username: user.username,
+        username: user.username || username,
+        userPub: userPub,
+        method: authMethod,
         error: null
       });
+      
+      // Save auth method for later retrieval
+      localStorage.setItem('shogun_auth_method', authMethod);
       
       return user;
     } catch (error) {
@@ -205,33 +306,41 @@ export const useAuth = (gunInstance) => {
     try {
       let user;
       let result;
+      let authMethod = method;
       
       switch (method) {
         case "password":
           user = await shogun.signUp(username, password);
+          authMethod = "password";
           break;
         case "webauthn":
           const webauthn = await shogun.getPlugin("webauthn");
           user = await webauthn.signUp(username);
+          authMethod = "webauthn";
           break;
         case "web3":
           const web3 = await shogun.getPlugin("web3");
           const address = await web3.connectMetaMask();
           if (!address) throw new Error("Nessun indirizzo ottenuto");
           user = await web3.signUp(address);
+          authMethod = "web3";
           break;
         case "nostr":
           const nostr = await shogun.getPlugin("nostr");
           const pubkey = await nostr.connectBitcoinWallet();
           if (!pubkey) throw new Error("Nessuna chiave pubblica ottenuta");
           user = await nostr.signUp(pubkey);
+          authMethod = "nostr";
           break;
         case "zkoauth":
           const zkoauth = await shogun.getPlugin("zk-oauth");
           result = await zkoauth.signUp(username || "google");
+          authMethod = "zkoauth";
           
           // If we have a redirect URL, return the result without updating auth status
           if (result.redirectUrl) {
+            // Store the auth method for when we return from OAuth
+            localStorage.setItem('shogun_auth_method', authMethod);
             return result;
           }
           
@@ -241,11 +350,19 @@ export const useAuth = (gunInstance) => {
           throw new Error("Metodo di registrazione non supportato");
       }
       
+      // Store user public key
+      const userPub = user?.pub || shogun.user?.is?.pub;
+      
       setAuthStatus({
         isLoggedIn: true,
-        username: user.username,
+        username: user.username || username,
+        userPub: userPub,
+        method: authMethod,
         error: null
       });
+      
+      // Save auth method for later retrieval
+      localStorage.setItem('shogun_auth_method', authMethod);
       
       return user;
     } catch (error) {
@@ -266,9 +383,15 @@ export const useAuth = (gunInstance) => {
       setAuthStatus({
         isLoggedIn: false,
         method: null,
+        username: null,
         userPub: null,
         error: null
       });
+      
+      // Clear stored authentication info
+      localStorage.removeItem('shogun_username');
+      localStorage.removeItem('shogun_auth_method');
+      sessionStorage.removeItem('shogun_authenticated');
     } catch (error) {
       setAuthStatus(prev => ({ ...prev, error: error.message }));
       throw error;

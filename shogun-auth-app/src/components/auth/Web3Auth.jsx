@@ -32,21 +32,21 @@ const Web3Auth = ({ onLogin, onRegister }) => {
 
   return (
     <div className="web3-auth">
-      <h3>🔐 Autenticazione Ethereum</h3>
+      <h3>🦊 Autenticazione MetaMask</h3>
       
       <div className="button-group">
         <button 
           onClick={handleLogin}
           disabled={loading}
         >
-          {loading ? 'Caricamento...' : '🔓 Login con Ethereum'}
+          {loading ? 'Caricamento...' : '🦊 Login con MetaMask'}
         </button>
         
         <button 
           onClick={handleRegister}
           disabled={loading}
         >
-          {loading ? 'Caricamento...' : '📝 Registra con Ethereum'}
+          {loading ? 'Caricamento...' : '🦊 Registra con MetaMask'}
         </button>
       </div>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import Gun from 'gun';
 
 export const useVault = (shogun, gunInstance) => {
   const [vaultStatus, setVaultStatus] = useState({
@@ -33,10 +34,36 @@ export const useVault = (shogun, gunInstance) => {
 
   // Generate new keypair
   const generateKeypair = useCallback(async () => {
-    if (!shogun) return null;
+    if (!shogun) {
+      setVaultStatus(prev => ({
+        ...prev,
+        error: "Shogun non inizializzato"
+      }));
+      return null;
+    }
 
     try {
-      const keypair = await shogun.sea.pair();
+      // Use Gun.SEA directly instead of shogun.sea
+      if (!Gun.SEA) {
+        console.error("Gun.SEA not available");
+        throw new Error("Gun.SEA not available");
+      }
+
+      // Add a timeout to fail gracefully
+      const keypairPromise = Promise.race([
+        Gun.SEA.pair(), // Use Gun.SEA instead of shogun.sea
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Timeout during keypair generation")), 5000)
+        )
+      ]);
+
+      const keypair = await keypairPromise;
+      
+      if (!keypair || !keypair.pub || !keypair.priv) {
+        throw new Error("Generated keypair is invalid");
+      }
+
+      console.log("Keypair generated successfully:", { pub: keypair.pub.substring(0, 15) + '...' });
       localStorage.setItem("shogun_vault_keypair", JSON.stringify(keypair));
       
       setVaultStatus({
@@ -47,9 +74,10 @@ export const useVault = (shogun, gunInstance) => {
 
       return keypair;
     } catch (error) {
+      console.error("Error generating keypair:", error);
       setVaultStatus(prev => ({
         ...prev,
-        error: "Errore nella generazione del keypair"
+        error: `Errore nella generazione del keypair: ${error.message || 'Unknown error'}`
       }));
       return null;
     }
@@ -74,7 +102,7 @@ export const useVault = (shogun, gunInstance) => {
 
   // Generate new proof
   const generateProof = useCallback(async (request) => {
-    if (!shogun || !vaultStatus.keypair) {
+    if (!vaultStatus.keypair) {
       throw new Error("Vault non inizializzato");
     }
     
@@ -84,7 +112,7 @@ export const useVault = (shogun, gunInstance) => {
         authMethod: request.type || "vault-signature",
         timestamp: Date.now(),
         requestingApp: request.requestingApp,
-        data: await shogun.sea.sign(`proof_${uuidv4()}`, vaultStatus.keypair),
+        data: await Gun.SEA.sign(`proof_${uuidv4()}`, vaultStatus.keypair),
         privacy: request.privacy || "zero_knowledge"
       };
       
@@ -100,9 +128,10 @@ export const useVault = (shogun, gunInstance) => {
         id: proofId
       };
     } catch (error) {
-      throw new Error("Errore nella generazione della proof");
+      console.error("Error generating proof:", error);
+      throw new Error(`Errore nella generazione della proof: ${error.message || 'Unknown error'}`);
     }
-  }, [shogun, gunInstance, vaultStatus.keypair]);
+  }, [gunInstance, vaultStatus.keypair]);
 
   // Verify proof
   const verifyProof = useCallback(async (proofId) => {
@@ -120,7 +149,8 @@ export const useVault = (shogun, gunInstance) => {
             return;
           }
           
-          const isValid = await shogun.sea.verify(
+          // Use Gun.SEA.verify instead of shogun.sea.verify
+          const isValid = await Gun.SEA.verify(
             proof.data, 
             vaultStatus.keypair.pub
           );
@@ -135,7 +165,7 @@ export const useVault = (shogun, gunInstance) => {
     } catch (error) {
       return { verified: false, error: error.message };
     }
-  }, [shogun, gunInstance, vaultStatus.keypair]);
+  }, [gunInstance, vaultStatus.keypair]);
 
   // Handle proof requests
   const handleProofRequest = useCallback((event) => {
