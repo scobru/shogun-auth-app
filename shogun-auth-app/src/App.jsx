@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Gun from "gun";
 import "gun/sea";
-import { ShogunCore } from "shogun-core";
-import { zkOAuthChain } from "shogun-core";
+import { oauthChain } from "shogun-core";
 import { WebAuthnAuth, Web3Auth, NostrAuth, ZKOAuthAuth } from "./components/auth";
 import OAuthCallback from "./components/auth/OAuthCallback";
+import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { useAuth } from "./hooks/useAuth";
 import { useVault } from "./hooks/useVault";
 import "./styles/auth.css";
+import "./styles/vault.css";
 
 // User Info component to display user details after login
 const UserInfo = ({ authStatus }) => {
@@ -22,459 +23,6 @@ const UserInfo = ({ authStatus }) => {
         <p><strong>Public Key:</strong> <span className="pubkey">{authStatus.userPub ? authStatus.userPub.substring(0, 12) + '...' : "Not available"}</span></p>
         <p><strong>Auth Method:</strong> {authStatus.method || "Standard"}</p>
       </div>
-    </div>
-  );
-};
-
-// Vault Manager component for ZK vault with dual authentication
-const VaultManager = ({ shogun, authStatus, vaultStatus, generateKeypair }) => {
-  const [metamaskAccount, setMetamaskAccount] = useState(null);
-  const [metamaskSignature, setMetamaskSignature] = useState(null);
-  const [oauthProof, setOauthProof] = useState(null);
-  const [vaultCreationStep, setVaultCreationStep] = useState(0);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [zkProof, setZkProof] = useState(null);
-  const [vaultExists, setVaultExists] = useState(false);
-  const [vaultData, setVaultData] = useState(null);
-
-  // Check if vault already exists and load vault data
-  useEffect(() => {
-    const checkVaultExists = async () => {
-      if (!shogun || !shogun.gun || !shogun.user || !shogun.user.is) {
-        return;
-      }
-      
-      try {
-        console.log("Checking if vault exists...");
-        const user = shogun.gun.user();
-        
-        // Improved vault check with better timeout handling
-        const checkVaultWithTimeout = async () => {
-          return Promise.race([
-            new Promise((resolve) => {
-              // First check if we can access the vault node directly
-              user.get('vault').once((data) => {
-                console.log("Vault data received:", data);
-                
-                // Check if data exists and has any properties
-                if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-                  console.log("Vault exists! Loading data...");
-                  
-                  // Simplified loading approach - get the entire object at once
-                  const loadedData = {
-                    metamaskAccount: null,
-                    metamaskSignature: null,
-                    createdAt: null,
-                    zkProof: {
-                      proof: null,
-                      verificationKey: null,
-                      publicSignals: []
-                    }
-                  };
-                  
-                  // Try to access zk data
-                  if (data.zk) {
-                    // Modern vault format
-                    loadedData.metamaskAccount = data.zk.metamaskAccount;
-                    loadedData.metamaskSignature = data.zk.metamaskSignature;
-                    loadedData.createdAt = data.zk.createdAt;
-                    
-                    if (data.zk.zkProof) {
-                      loadedData.zkProof = data.zk.zkProof;
-                    }
-                    
-                    setVaultData(loadedData);
-                    resolve(true);
-                  } else {
-                    // Try legacy format by checking for nested zk data
-                    user.get('vault').get('zk').once((zkData) => {
-                      if (zkData && typeof zkData === 'object') {
-                        console.log("Found legacy vault format");
-                        
-                        // Load basic fields
-                        user.get('vault').get('zk').get('metamaskAccount').once(val => {
-                          if (val) loadedData.metamaskAccount = val;
-                        });
-                        
-                        user.get('vault').get('zk').get('metamaskSignature').once(val => {
-                          if (val) loadedData.metamaskSignature = val;
-                        });
-                        
-                        user.get('vault').get('zk').get('createdAt').once(val => {
-                          if (val) loadedData.createdAt = val;
-                        });
-                        
-                        // Load ZK proof fields
-                        user.get('vault').get('zk').get('zkProof').get('proof').once(val => {
-                          if (val) loadedData.zkProof.proof = val;
-                        });
-                        
-                        user.get('vault').get('zk').get('zkProof').get('verificationKey').once(val => {
-                          if (val) loadedData.zkProof.verificationKey = val;
-                        });
-                        
-                        // Set the loaded data after a short delay to ensure all fields are loaded
-                        setTimeout(() => {
-                          console.log("Setting vault data from legacy format:", loadedData);
-                          setVaultData(loadedData);
-                          resolve(true);
-                        }, 1000);
-                      } else {
-                        console.log("No ZK vault data found");
-                        resolve(false);
-                      }
-                    });
-                    
-                    // Set a timeout for the inner check to ensure it resolves
-                    setTimeout(() => resolve(false), 1500);
-                  }
-                } else {
-                  console.log("Vault does not exist or is empty");
-                  resolve(false);
-                }
-              });
-            }),
-            // Add a timeout to prevent hanging
-            new Promise((resolve) => {
-              setTimeout(() => {
-                console.log("Vault check timed out");
-                resolve(false);
-              }, 3000);
-            })
-          ]);
-        };
-        
-        const vaultExists = await checkVaultWithTimeout();
-        console.log("Vault exists check result:", vaultExists);
-        setVaultExists(vaultExists);
-      } catch (err) {
-        console.error("Error checking vault:", err);
-        setVaultExists(false);
-      }
-    };
-    
-    if (authStatus.isLoggedIn) {
-      checkVaultExists();
-    }
-  }, [shogun, authStatus.isLoggedIn]);
-
-  // Connect to MetaMask
-  const connectMetamask = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      if (!window.ethereum) {
-        throw new Error("MetaMask not installed");
-      }
-      
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      if (accounts.length === 0) {
-        throw new Error("No accounts found");
-      }
-      
-      setMetamaskAccount(accounts[0]);
-      setVaultCreationStep(1);
-      
-    } catch (err) {
-      setError(`MetaMask connection error: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Sign message with MetaMask
-  const signWithMetamask = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      if (!metamaskAccount) {
-        throw new Error("MetaMask not connected");
-      }
-      
-      const message = `Authorize Shogun ZK Vault Creation\nTimestamp: ${Date.now()}\nUser: ${authStatus.username || authStatus.userPub}`;
-      const signature = await window.ethereum.request({
-        method: 'personal_sign',
-        params: [message, metamaskAccount],
-      });
-      
-      setMetamaskSignature({
-        message,
-        signature,
-        account: metamaskAccount
-      });
-      
-      setVaultCreationStep(2);
-    } catch (err) {
-      setError(`Signature error: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Generate ZK proof with Google OAuth
-  const generateZKProof = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      if (!shogun) {
-        throw new Error("Shogun not initialized");
-      }
-      
-      // Get ZK-OAuth plugin
-      const zkOAuthPlugin = await shogun.getPlugin("zk-oauth");
-      if (!zkOAuthPlugin) {
-        throw new Error("ZK-OAuth plugin not found");
-      }
-      
-      // Create a custom proof using metamask signature and user info
-      const proofData = {
-        metamaskAccount,
-        signature: metamaskSignature.signature,
-        signedMessage: metamaskSignature.message,
-        username: authStatus.username,
-        userPub: authStatus.userPub,
-        timestamp: Date.now()
-      };
-      
-      // Use the ZK-OAuth chain to generate a proof
-      const gun = shogun.gun;
-      console.log("Gun instance:", gun);
-      console.log("Checking for zkOAuth chain extension:", gun.zkOAuth ? "Available" : "Not available");
-      
-      if (!gun.zkOAuth) {
-        // Try to initialize the chain again
-        try {
-          console.log("Attempting to initialize zkOAuthChain again...");
-          // Initialize zkOAuth chain - no need to pass gun instance
-          zkOAuthChain();
-          console.log("zkOAuthChain initialization retry complete");
-          
-          // Check if it's available now
-          if (!gun.zkOAuth) {
-            throw new Error("ZK-OAuth chain still not initialized after retry");
-          }
-        } catch (chainError) {
-          console.error("Error initializing zkOAuthChain:", chainError);
-          throw new Error(`ZK-OAuth chain not initialized: ${chainError.message}`);
-        }
-      }
-      
-      console.log("Creating proof with data:", proofData);
-      const proofResult = await gun.zkOAuth.createProofForData(proofData);
-      console.log("Proof result:", proofResult);
-      
-      if (!proofResult.success) {
-        throw new Error(`Failed to create ZK proof: ${proofResult.error || "Unknown error"}`);
-      }
-      
-      setZkProof(proofResult.proof);
-      setVaultCreationStep(3);
-      
-    } catch (err) {
-      console.error("ZK proof generation error:", err);
-      setError(`ZK proof generation error: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Create vault with ZK proof
-  const createZKVault = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      if (!zkProof) {
-        throw new Error("ZK proof not generated");
-      }
-      
-      console.log("Creating vault with ZK proof...");
-      
-      // Get Gun and SEA
-      const gun = shogun.gun;
-      if (!gun || !gun.user || !gun.user().is) {
-        throw new Error("Gun user not initialized");
-      }
-      
-      // Use the existing user instead of creating a new keypair
-      const user = gun.user();
-      console.log("Using existing user for vault:", user.is);
-      
-      // Prepare the data for Gun.js - Convert arrays to objects with numeric keys
-      // Gun.js doesn't handle arrays well, so we convert them to objects
-      const preparedZkProof = {
-        proof: zkProof.proof,
-        verificationKey: zkProof.verificationKey,
-        // Convert publicSignals array to an object with numeric keys
-        publicSignals: zkProof.publicSignals.reduce((obj, item, index) => {
-          obj[index] = item;
-          return obj;
-        }, {})
-      };
-      
-      console.log("Prepared ZK proof for Gun storage:", preparedZkProof);
-      
-      // Store the ZK proof and MetaMask signature in the vault
-      console.log("Storing ZK proof in vault...");
-      
-      // Create a simpler vault data structure
-      const vaultData = {
-        zk: {
-          metamaskAccount: metamaskAccount,
-          metamaskSignature: metamaskSignature.signature,
-          createdAt: Date.now(),
-          username: authStatus.username,
-          userPub: authStatus.userPub,
-          zkProof: {
-            proof: preparedZkProof.proof,
-            verificationKey: preparedZkProof.verificationKey,
-            publicSignals: preparedZkProof.publicSignals
-          }
-        }
-      };
-      
-      // Create vault with a timeout promise
-      const storeVaultWithTimeout = async () => {
-        return Promise.race([
-          new Promise((resolve, reject) => {
-            try {
-              // Use a single put operation
-              console.log("Putting vault data to Gun DB...");
-              user.get('vault').put(vaultData, (ack) => {
-                if (ack.err) {
-                  console.error("Gun storage error:", ack.err);
-                  reject(new Error(`Vault storage error: ${ack.err}`));
-                  return;
-                }
-                
-                console.log("Vault data stored successfully:", ack);
-                resolve(true);
-              });
-            } catch (err) {
-              console.error("Error in Gun put operation:", err);
-              reject(err);
-            }
-          }),
-          // Add a timeout to prevent hanging
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Vault storage timed out after 10 seconds")), 10000)
-          )
-        ]);
-      };
-      
-      await storeVaultWithTimeout();
-      console.log("Vault created successfully!");
-      setVaultCreationStep(4);
-      
-    } catch (err) {
-      console.error("Vault creation error:", err);
-      setError(`Vault creation error: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // If the vault exists, show vault status with loaded data
-  if (vaultExists) {
-    return (
-      <div className="vault-manager">
-        <h3>🔐 ZK Vault Status</h3>
-        <div className="vault-manager-content">
-          <p>Vault is initialized and secured with Zero-Knowledge proofs.</p>
-          <p><strong>User:</strong> {authStatus.username}</p>
-          <p><strong>Public Key:</strong> <span className="pubkey">{authStatus.userPub?.substring(0, 12)}...</span></p>
-          
-          {vaultData && (
-            <div className="vault-details">
-              <h4>Vault Details</h4>
-              <p><strong>MetaMask Account:</strong> <span className="address">{vaultData.metamaskAccount?.substring(0, 10)}...</span></p>
-              <p><strong>Created:</strong> {vaultData.createdAt ? new Date(vaultData.createdAt).toLocaleString() : 'Unknown'}</p>
-              <p><strong>ZK Proof:</strong> <span className="proof-id">{vaultData.zkProof?.proof?.substring(0, 10)}...</span></p>
-            </div>
-          )}
-          
-          <button onClick={() => setVaultExists(false)} className="reset-button">
-            Reset Vault View
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="vault-manager">
-      <h3>🔐 Create ZK Vault</h3>
-      <div className="vault-creation-steps">
-        <div className={`vault-step ${vaultCreationStep >= 0 ? 'active' : ''} ${vaultCreationStep > 0 ? 'completed' : ''}`}>
-          <h4>Step 1: Connect MetaMask</h4>
-          {vaultCreationStep === 0 && (
-            <button 
-              onClick={connectMetamask}
-              disabled={loading || !authStatus.isLoggedIn}
-            >
-              {loading ? 'Connecting...' : '🦊 Connect MetaMask'}
-            </button>
-          )}
-          {metamaskAccount && (
-            <p className="step-result">Connected: {metamaskAccount.substring(0, 8)}...</p>
-          )}
-        </div>
-        
-        <div className={`vault-step ${vaultCreationStep >= 1 ? 'active' : ''} ${vaultCreationStep > 1 ? 'completed' : ''}`}>
-          <h4>Step 2: Sign Authorization</h4>
-          {vaultCreationStep === 1 && (
-            <button 
-              onClick={signWithMetamask}
-              disabled={loading || !metamaskAccount}
-            >
-              {loading ? 'Signing...' : '✍️ Sign with MetaMask'}
-            </button>
-          )}
-          {metamaskSignature && (
-            <p className="step-result">Signature: {metamaskSignature.signature.substring(0, 8)}...</p>
-          )}
-        </div>
-        
-        <div className={`vault-step ${vaultCreationStep >= 2 ? 'active' : ''} ${vaultCreationStep > 2 ? 'completed' : ''}`}>
-          <h4>Step 3: Generate ZK Proof</h4>
-          {vaultCreationStep === 2 && (
-            <button 
-              onClick={generateZKProof}
-              disabled={loading || !metamaskSignature}
-            >
-              {loading ? 'Generating...' : '🔒 Generate ZK Proof'}
-            </button>
-          )}
-          {zkProof && (
-            <p className="step-result">ZK Proof Generated!</p>
-          )}
-        </div>
-        
-        <div className={`vault-step ${vaultCreationStep >= 3 ? 'active' : ''} ${vaultCreationStep > 3 ? 'completed' : ''}`}>
-          <h4>Step 4: Create Vault</h4>
-          {vaultCreationStep === 3 && (
-            <button 
-              onClick={createZKVault}
-              disabled={loading || !zkProof}
-            >
-              {loading ? 'Creating...' : '💼 Create ZK Vault'}
-            </button>
-          )}
-          {vaultCreationStep === 4 && (
-            <p className="step-success">✅ ZK Vault created successfully!</p>
-          )}
-        </div>
-      </div>
-      
-      {error && (
-        <div className="error-message">
-          ❌ {error}
-        </div>
-      )}
     </div>
   );
 };
@@ -495,20 +43,20 @@ function AuthApp() {
     }
   }, []);
 
-  // Initialize GunDB and zkOAuthChain
+  // Initialize GunDB and oauthChain
   useEffect(() => {
     gunRef.current = Gun({
       peers: ["http://localhost:8765/gun"],
     });
     
-    // Initialize the zkOAuthChain to extend Gun with zkOAuth methods
+    // Initialize the oauthChain to extend Gun with oauth methods
     try {
-      console.log("Initializing zkOAuthChain...");
-      // Call the zkOAuthChain function directly - it extends Gun.chain internally
-      zkOAuthChain();
-      console.log("zkOAuthChain initialized successfully");
+      console.log("Initializing oauthChain...");
+      // Call the oauthChain function directly - it extends Gun.chain internally
+      oauthChain();
+      console.log("oauthChain initialized successfully");
     } catch (error) {
-      console.error("Failed to initialize zkOAuthChain:", error);
+      console.error("Failed to initialize oauthChain:", error);
     }
   }, []);
 
@@ -538,7 +86,7 @@ function AuthApp() {
     webauthn: false,
     web3: false,
     nostr: false,
-    zkoauth: true // Forziamo a true per visualizzare sempre l'opzione Google OAuth
+    oauth: true // Forziamo a true per visualizzare sempre l'opzione Google OAuth
   });
   const [selectedAuthMethod, setSelectedAuthMethod] = useState("password");
 
@@ -550,9 +98,9 @@ function AuthApp() {
   useEffect(() => {
     const checkMethods = async () => {
       const methods = await checkAuthMethods();
-      // Forziamo zkoauth e web3 (MetaMask) a true per visualizzarli sempre
-      setAuthMethods({...methods, zkoauth: true, web3: true});
-      console.log("Auth methods:", {...methods, zkoauth: true, web3: true});
+      // Forziamo oauth e web3 (MetaMask) a true per visualizzarli sempre
+      setAuthMethods({...methods, oauth: true, web3: true});
+      console.log("Auth methods:", {...methods, oauth: true, web3: true});
     };
     checkMethods();
   }, [checkAuthMethods]);
@@ -561,17 +109,19 @@ function AuthApp() {
   useEffect(() => {
     if (authStatus.isLoggedIn) {
       loadProofs();
+      
+      // Generate keypair if not already created
+      if (!vaultStatus.keypair) {
+        generateKeypair();
+      }
     }
-  }, [authStatus.isLoggedIn, loadProofs]);
+  }, [authStatus.isLoggedIn, loadProofs, vaultStatus.keypair, generateKeypair]);
 
   // Handle password auth
   const handlePasswordLogin = async () => {
     if (!username || !password) return;
     try {
       await login(username, password);
-      if (!vaultStatus.keypair) {
-        await generateKeypair();
-      }
     } catch (error) {
       console.error("Errore login:", error);
     }
@@ -581,7 +131,6 @@ function AuthApp() {
     if (!username || !password) return;
     try {
       await register(username, password);
-      await generateKeypair();
     } catch (error) {
       console.error("Errore registrazione:", error);
     }
@@ -591,9 +140,6 @@ function AuthApp() {
   const handleWebAuthnLogin = async (username) => {
     try {
       await login(username, null, "webauthn");
-      if (!vaultStatus.keypair) {
-        await generateKeypair();
-      }
     } catch (error) {
       console.error("Errore login WebAuthn:", error);
       throw error;
@@ -603,7 +149,6 @@ function AuthApp() {
   const handleWebAuthnRegister = async (username) => {
     try {
       await register(username, null, "webauthn");
-      await generateKeypair();
     } catch (error) {
       console.error("Errore registrazione WebAuthn:", error);
       throw error;
@@ -614,9 +159,6 @@ function AuthApp() {
   const handleWeb3Login = async () => {
     try {
       await login(null, null, "web3");
-      if (!vaultStatus.keypair) {
-        await generateKeypair();
-      }
     } catch (error) {
       console.error("Errore login Web3:", error);
       throw error;
@@ -626,7 +168,6 @@ function AuthApp() {
   const handleWeb3Register = async () => {
     try {
       await register(null, null, "web3");
-      await generateKeypair();
     } catch (error) {
       console.error("Errore registrazione Web3:", error);
       throw error;
@@ -637,9 +178,6 @@ function AuthApp() {
   const handleNostrLogin = async () => {
     try {
       await login(null, null, "nostr");
-      if (!vaultStatus.keypair) {
-        await generateKeypair();
-      }
     } catch (error) {
       console.error("Errore login Nostr:", error);
       throw error;
@@ -649,15 +187,14 @@ function AuthApp() {
   const handleNostrRegister = async () => {
     try {
       await register(null, null, "nostr");
-      await generateKeypair();
     } catch (error) {
       console.error("Errore registrazione Nostr:", error);
       throw error;
     }
   };
 
-  // Handle ZK-OAuth auth
-  const handleZKOAuthLogin = async (provider) => {
+  // Handle OAuth auth
+  const handleOAuthLogin = async (provider) => {
     try {
       console.log("Tentativo di login OAuth con provider:", provider);
       
@@ -665,17 +202,13 @@ function AuthApp() {
       localStorage.setItem('oauth_provider', provider);
       
       // Get the auth result with redirect URL
-      const result = await login(provider, null, "zkoauth");
+      const result = await login(provider, null, "oauth");
       
       // Check if we need to redirect
       if (result && result.redirectUrl) {
         console.log("Redirect to:", result.redirectUrl);
         window.location.href = result.redirectUrl;
         return;
-      }
-      
-      if (!vaultStatus.keypair) {
-        await generateKeypair();
       }
     } catch (error) {
       console.error("Errore login OAuth:", error);
@@ -683,7 +216,7 @@ function AuthApp() {
     }
   };
 
-  const handleZKOAuthRegister = async (provider) => {
+  const handleOAuthRegister = async (provider) => {
     try {
       console.log("Tentativo di registrazione OAuth con provider:", provider);
       
@@ -691,7 +224,7 @@ function AuthApp() {
       localStorage.setItem('oauth_provider', provider);
       
       // Get the auth result with redirect URL
-      const result = await register(provider, null, "zkoauth");
+      const result = await register(provider, null, "oauth");
       
       // Check if we need to redirect
       if (result && result.redirectUrl) {
@@ -699,8 +232,6 @@ function AuthApp() {
         window.location.href = result.redirectUrl;
         return;
       }
-      
-      await generateKeypair();
     } catch (error) {
       console.error("Errore registrazione OAuth:", error);
       throw error;
@@ -781,10 +312,17 @@ function AuthApp() {
 
   const MainApp = () => (
     <div className="app">
-      <div className="header">
-        <h1 className="title">🥷 Shogun Auth Vault</h1>
-        <p className="subtitle">Sistema di autenticazione con vault decentralizzato</p>
-      </div>
+      {/* Decorative elements */}
+      <div className="decorative-shape shape-1"></div>
+      <div className="decorative-shape shape-2"></div>
+      <div className="decorative-shape shape-3"></div>
+      <div className="decorative-shape shape-4"></div>
+      <div className="decorative-shape shape-5"></div>
+      
+      <header className="header">
+        <h1 className="title">🥷 Shogun Auth</h1>
+        <p className="subtitle">Secure, decentralized authentication and data storage with GunDB</p>
+      </header>
 
       <div className="auth-status-container">
         <div className={`status-indicator ${authStatus.isLoggedIn ? "authenticated" : "not-authenticated"}`}>
@@ -854,8 +392,8 @@ function AuthApp() {
             <label>
               <input
                 type="radio"
-                value="zkoauth"
-                checked={selectedAuthMethod === "zkoauth"}
+                value="oauth"
+                checked={selectedAuthMethod === "oauth"}
                 onChange={(e) => setSelectedAuthMethod(e.target.value)}
               />
               Google OAuth
@@ -907,28 +445,20 @@ function AuthApp() {
           />
         )}
         
-        {selectedAuthMethod === "zkoauth" && (
+        {selectedAuthMethod === "oauth" && (
           <ZKOAuthAuth
-            onLogin={handleZKOAuthLogin}
-            onRegister={handleZKOAuthRegister}
+            onLogin={handleOAuthLogin}
+            onRegister={handleOAuthRegister}
           />
         )}
       </div>
       
-      {/* Add ZK Vault Manager Section when user is logged in */}
+      {/* Add Encrypted Data Manager when user is logged in */}
       {authStatus.isLoggedIn && (
-        <div className="zk-vault-section">
-          <h2>🛡️ ZK Vault con Doppia Autenticazione</h2>
-          <p className="vault-description">
-            Crea un vault sicuro combinando la firma MetaMask e l'autenticazione Google OAuth con prova Zero-Knowledge.
-          </p>
-          <VaultManager 
-            shogun={shogun}
-            authStatus={authStatus}
-            vaultStatus={vaultStatus}
-            generateKeypair={generateKeypair}
-          />
-        </div>
+        <EncryptedDataManager 
+          shogun={shogun}
+          authStatus={authStatus}
+        />
       )}
 
       <PendingProofRequests />
