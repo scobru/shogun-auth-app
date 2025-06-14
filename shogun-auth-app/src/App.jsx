@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Gun from "gun";
-import "gun/sea";
-import { oauthChain } from "shogun-core";
+import "gun/sea"
+import { oauthChain} from "shogun-core";
 import { WebAuthnAuth, Web3Auth, NostrAuth, ZKOAuthAuth } from "./components/auth";
 import OAuthCallback from "./components/auth/OAuthCallback";
 import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { useAuth } from "./hooks/useAuth";
 import { useVault } from "./hooks/useVault";
+import { ThemeToggle } from "./components/ui";
 import "./styles/auth.css";
 import "./styles/vault.css";
+import "./index.css"; // Import Tailwind CSS
+
 
 // User Info component to display user details after login
 const UserInfo = ({ authStatus }) => {
@@ -283,7 +286,10 @@ function AuthApp() {
 
     return (
       <div className="stored-proofs">
-        <h3>📋 Proof Archiviate ({storedProofs.length})</h3>
+        <h3>
+          <span className="section-icon">📋</span>
+          Proof Archiviate ({storedProofs.length})
+        </h3>
         <div className="proofs-list">
           {storedProofs.map(proof => (
             <div key={proof.id} className="proof-item">
@@ -319,9 +325,12 @@ function AuthApp() {
       <div className="decorative-shape shape-4"></div>
       <div className="decorative-shape shape-5"></div>
       
-      <header className="header">
-        <h1 className="title">🥷 Shogun Auth</h1>
-        <p className="subtitle">Secure, decentralized authentication and data storage with GunDB</p>
+      <header className="header flex justify-between items-center">
+        <div>
+          <h1 className="title">🥷 Shogun Auth</h1>
+          <p className="subtitle">Secure, decentralized authentication and data storage with GunDB</p>
+        </div>
+        <ThemeToggle />
       </header>
 
       <div className="auth-status-container">

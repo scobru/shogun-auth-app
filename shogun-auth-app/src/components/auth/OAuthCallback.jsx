@@ -79,21 +79,21 @@ const OAuthCallback = ({ shogun }) => {
           }
         }
         
-        // Get the ZK-OAuth plugin
-        const zkOAuthPlugin = await shogun.getPlugin("zk-oauth");
+        // Get the OAuth plugin
+        const oAuthPlugin = await shogun.getPlugin("oauth");
         
-        if (!zkOAuthPlugin) {
-          throw new Error('Plugin ZK-OAuth non trovato.');
+        if (!oAuthPlugin) {
+          throw new Error('Plugin OAuth non trovato.');
         }
         
-        // Now store the code verifier in a location where the ZKOAuthConnector can find it
+        // Now store the code verifier in a location where the OAuthConnector can find it
         // This fixes the CSRF error by ensuring the connector has access to the verifier
         sessionStorage.setItem(`oauth_verifier_${provider}`, codeVerifier);
         sessionStorage.setItem(`oauth_state_${provider}`, storedState);
         
-        // Use the plugin's handleSimpleOAuth method instead of handleOAuthCallback
-        setStatus('Completamento autenticazione con OAuth semplice...');
-        const authResult = await zkOAuthPlugin.handleSimpleOAuth(provider, code, state);
+        // Use the plugin's handleOAuthCallback method
+        setStatus('Completamento autenticazione con OAuth...');
+        const authResult = await oAuthPlugin.handleOAuthCallback(provider, code, state);
         
         if (!authResult.success) {
           throw new Error(`Autenticazione fallita: ${authResult.error}`);
@@ -113,9 +113,9 @@ const OAuthCallback = ({ shogun }) => {
           console.log('Saved userPub to localStorage:', authResult.userPub);
         }
         
-        // Set authentication method as zkoauth in localStorage
-        localStorage.setItem('shogun_auth_method', 'zkoauth');
-        console.log('Set auth method in localStorage: zkoauth');
+        // Set authentication method as oauth in localStorage
+        localStorage.setItem('shogun_auth_method', 'oauth');
+        console.log('Set auth method in localStorage: oauth');
 
         // Imposta manualmente il flag di autenticazione in sessionStorage
         // Questo verrà letto all'avvio dell'app dopo il redirect

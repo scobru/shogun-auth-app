@@ -24,7 +24,7 @@ export const useAuth = (gunInstance) => {
       },
       web3: { enabled: true }, // Abilitato il supporto per MetaMask
       nostr: { enabled: true },
-      "zk-oauth": { 
+      "oauth": { 
         enabled: true,
         usePKCE: true,
         providers: {
@@ -52,6 +52,8 @@ export const useAuth = (gunInstance) => {
         if (typeof core.isLoggedIn === 'function' && core.isLoggedIn()) {
           try {
             core.logout();
+            localStorage.clear
+            sessionStorage.clear
           } catch (e) {
             console.warn("Error during logout:", e);
           }
@@ -236,21 +238,35 @@ export const useAuth = (gunInstance) => {
           break;
         case "webauthn":
           const webauthn = await shogun.getPlugin("webauthn");
-          user = await webauthn.signIn(username);
+          user = await webauthn.login(username);
           authMethod = "webauthn";
           break;
         case "web3":
           const web3 = await shogun.getPlugin("web3");
-          const address = await web3.connectMetaMask();
+          const web3Result = await web3.connectMetaMask();
+          if (!web3Result || !web3Result.success) {
+            throw new Error(web3Result?.error || "Nessun indirizzo ottenuto");
+          }
+          const address = web3Result.address;
           if (!address) throw new Error("Nessun indirizzo ottenuto");
           user = await web3.login(address);
           authMethod = "web3";
           break;
         case "nostr":
           const nostr = await shogun.getPlugin("nostr");
-          const pubkey = await nostr.connectBitcoinWallet();
+          const nostrResult = await nostr.connectBitcoinWallet();
+          
+          // Check if nostrResult is successful
+          if (!nostrResult || !nostrResult.success) {
+            throw new Error(nostrResult?.error || "Connessione al wallet Bitcoin fallita");
+          }
+          
+          // Extract the pubkey from the result
+          const pubkey = nostrResult.address;
           if (!pubkey) throw new Error("Nessuna chiave pubblica ottenuta");
-          user = await nostr.signIn(pubkey);
+          
+          // Login with the pubkey
+          user = await nostr.login(pubkey);
           authMethod = "nostr";
           break;
         case "zkoauth":
@@ -320,15 +336,29 @@ export const useAuth = (gunInstance) => {
           break;
         case "web3":
           const web3 = await shogun.getPlugin("web3");
-          const address = await web3.connectMetaMask();
+          const web3Result = await web3.connectMetaMask();
+          if (!web3Result || !web3Result.success) {
+            throw new Error(web3Result?.error || "Nessun indirizzo ottenuto");
+          }
+          const address = web3Result.address;
           if (!address) throw new Error("Nessun indirizzo ottenuto");
           user = await web3.signUp(address);
           authMethod = "web3";
           break;
         case "nostr":
           const nostr = await shogun.getPlugin("nostr");
-          const pubkey = await nostr.connectBitcoinWallet();
+          const nostrResult = await nostr.connectBitcoinWallet();
+          
+          // Check if nostrResult is successful
+          if (!nostrResult || !nostrResult.success) {
+            throw new Error(nostrResult?.error || "Connessione al wallet Bitcoin fallita");
+          }
+          
+          // Extract the pubkey from the result
+          const pubkey = nostrResult.address;
           if (!pubkey) throw new Error("Nessuna chiave pubblica ottenuta");
+          
+          // Sign up with the pubkey
           user = await nostr.signUp(pubkey);
           authMethod = "nostr";
           break;
