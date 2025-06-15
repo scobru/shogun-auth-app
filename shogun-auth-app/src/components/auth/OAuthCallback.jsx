@@ -122,6 +122,14 @@ const OAuthCallback = ({ shogun }) => {
         sessionStorage.setItem('shogun_authenticated', 'true');
         console.log('Set authentication flag in sessionStorage');
         
+        // Store user pair in sessionStorage for persistent authentication
+        if (shogun.user && shogun.user._.sea) {
+          sessionStorage.setItem('shogun_user_pair', JSON.stringify(shogun.user._.sea));
+          console.log('Saved user pair to sessionStorage for persistent authentication');
+        } else {
+          console.warn('Could not save user pair to sessionStorage - user._.sea not available');
+        }
+        
         // Clear stored OAuth data
         localStorage.removeItem(`oauth_verifier_${provider}`);
         localStorage.removeItem(`oauth_challenge_${provider}`);
@@ -157,40 +165,71 @@ const OAuthCallback = ({ shogun }) => {
   }, [searchParams, shogun, navigate]);
 
   return (
-    <div className="oauth-callback">
-      <h2>🔐 Autenticazione OAuth</h2>
-      
-      {!error ? (
-        <div className="success-message">
-          <p>{status}</p>
-          <div className="loading-spinner"></div>
+    <div className="flex items-center justify-center min-h-screen bg-base-200">
+      <div className="card w-full max-w-md bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title flex items-center justify-center text-2xl mb-6">
+            <span className="text-xl mr-2">🔐</span> Autenticazione OAuth
+          </h2>
           
-          {tokenData && (
-            <details className="debug-info">
-              <summary>Token Data</summary>
-              <pre>{JSON.stringify(tokenData, null, 2)}</pre>
-            </details>
-          )}
-          
-          {userInfo && (
-            <details className="debug-info">
-              <summary>User Info</summary>
-              <pre>{JSON.stringify(userInfo, null, 2)}</pre>
-            </details>
+          {!error ? (
+            <div className="text-center">
+              <p className="mb-4">{status}</p>
+              <div className="flex justify-center">
+                <span className="loading loading-spinner loading-lg"></span>
+              </div>
+              
+              {tokenData && (
+                <div className="collapse collapse-arrow bg-base-200 mt-4">
+                  <input type="checkbox" /> 
+                  <div className="collapse-title font-medium">
+                    Token Data
+                  </div>
+                  <div className="collapse-content"> 
+                    <pre className="text-xs whitespace-pre-wrap bg-base-300 p-2 rounded-md">{JSON.stringify(tokenData, null, 2)}</pre>
+                  </div>
+                </div>
+              )}
+              
+              {userInfo && (
+                <div className="collapse collapse-arrow bg-base-200 mt-4">
+                  <input type="checkbox" /> 
+                  <div className="collapse-title font-medium">
+                    User Info
+                  </div>
+                  <div className="collapse-content"> 
+                    <pre className="text-xs whitespace-pre-wrap bg-base-300 p-2 rounded-md">{JSON.stringify(userInfo, null, 2)}</pre>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="alert alert-error mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{error}</span>
+              </div>
+              
+              {errorDetails && (
+                <div className="collapse collapse-arrow bg-base-200 mt-4">
+                  <input type="checkbox" /> 
+                  <div className="collapse-title font-medium">
+                    Dettagli tecnici
+                  </div>
+                  <div className="collapse-content"> 
+                    <pre className="text-xs whitespace-pre-wrap bg-base-300 p-2 rounded-md">{errorDetails}</pre>
+                  </div>
+                </div>
+              )}
+              
+              <p className="mt-4">Reindirizzamento alla pagina principale...</p>
+              <div className="flex justify-center mt-4">
+                <span className="loading loading-spinner loading-md"></span>
+              </div>
+            </div>
           )}
         </div>
-      ) : (
-        <div className="error-message">
-          <p>❌ {error}</p>
-          {errorDetails && (
-            <details>
-              <summary>Dettagli tecnici</summary>
-              <pre>{errorDetails}</pre>
-            </details>
-          )}
-          <p>Reindirizzamento alla pagina principale...</p>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -159,89 +159,118 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
   };
 
   return (
-    <div className="encrypted-data-manager">
-      <h2>
-        <span className="icon-vault">🔐</span>
-        Encrypted Data Vault
-      </h2>
-      <p className="vault-description">
-        Store and manage your encrypted data securely. All data is encrypted using your personal keys and stored in GunDB.
-      </p>
-      
-      <form className="data-entry-form" onSubmit={handleSubmit}>
-        <div className="form-header">
-          <span className="form-icon">✨</span>
-          <h3>Add New Encrypted Data</h3>
-        </div>
-        <input
-          type="text"
-          placeholder="Data Key (e.g., 'password', 'api_key')"
-          value={dataKey}
-          onChange={(e) => setDataKey(e.target.value)}
-        />
-        <textarea
-          placeholder="Data Value (will be encrypted)"
-          value={dataValue}
-          onChange={(e) => setDataValue(e.target.value)}
-        />
-        <button type="submit" disabled={loading || !dataKey.trim() || !dataValue.trim()}>
-          {loading ? "Encrypting & Storing..." : "Encrypt & Store"}
-        </button>
-        {error && <div className="error-message">{error}</div>}
-      </form>
-      
-      <div className="stored-data-section">
-        <h3>
-          <span className="section-icon">🔒</span>
-          Your Encrypted Data
-        </h3>
+    <div className="card bg-base-100 shadow-xl mb-6">
+      <div className="card-body">
+        <h2 className="card-title text-2xl flex items-center gap-2">
+          <span className="text-2xl">🔐</span> Encrypted Data Vault
+        </h2>
+        <p className="text-base-content/70 mb-4">
+          Store and manage your encrypted data securely. All data is encrypted using your personal keys and stored in GunDB.
+        </p>
         
-        {Object.keys(storedData).length === 0 ? (
-          <div className="no-data">
-            <span className="empty-icon">📭</span>
-            <p>No encrypted data stored yet. Add your first entry above.</p>
-          </div>
-        ) : (
-          <div className="data-items">
-            {Object.keys(storedData).map(key => (
-              <div className="data-item" key={key}>
-                <div className="data-item-header">
-                  <div className="data-key">{key}</div>
-                  <div className="data-actions">
-                    <button 
-                      className="decrypt-btn"
-                      onClick={() => handleDecrypt(key)}
-                    >
-                      Decrypt
-                    </button>
-                    <button 
-                      className="delete-btn"
-                      onClick={() => handleDelete(key)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="data-content">
-                  <div className="encrypted-data">
-                    <h4>Encrypted Data</h4>
-                    <pre>{typeof storedData[key] === 'string' 
-                      ? storedData[key].substring(0, 100) + (storedData[key].length > 100 ? '...' : '')
-                      : JSON.stringify(storedData[key], null, 2)}</pre>
-                  </div>
-                  
-                  {decryptedData[key] && (
-                    <div className="decrypted-data">
-                      <h4>Decrypted Value</h4>
-                      <pre>{decryptedData[key]}</pre>
-                    </div>
-                  )}
-                </div>
+        <div className="card bg-base-200 mb-6">
+          <div className="card-body">
+            <h3 className="card-title text-lg flex items-center gap-2">
+              <span className="text-lg">✨</span> Add New Encrypted Data
+            </h3>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="text"
+                placeholder="Data Key (e.g., 'password', 'api_key')"
+                value={dataKey}
+                onChange={(e) => setDataKey(e.target.value)}
+                className="input input-bordered w-full"
+              />
+              <textarea
+                placeholder="Data Value (will be encrypted)"
+                value={dataValue}
+                onChange={(e) => setDataValue(e.target.value)}
+                className="textarea textarea-bordered w-full min-h-[100px]"
+              />
+              <button 
+                type="submit" 
+                disabled={loading || !dataKey.trim() || !dataValue.trim() || isSubmitting}
+                className="btn btn-primary w-full"
+              >
+                {isSubmitting ? <span className="loading loading-spinner"></span> : null}
+                {isSubmitting ? "Encrypting & Storing..." : "Encrypt & Store"}
+              </button>
+            </form>
+            
+            {error && (
+              <div className="alert alert-error mt-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{error}</span>
               </div>
-            ))}
+            )}
           </div>
-        )}
+        </div>
+        
+        <div className="mt-6">
+          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <span className="text-lg">🔒</span> Your Encrypted Data
+          </h3>
+          
+          {Object.keys(storedData).length === 0 ? (
+            <div className="text-center py-8 bg-base-200 rounded-lg border border-base-300">
+              <span className="text-4xl block mb-3">📭</span>
+              <p className="text-base-content/70">No encrypted data stored yet. Add your first entry above.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {Object.keys(storedData).map(key => (
+                <div className="card bg-base-200" key={key}>
+                  <div className="card-body p-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-medium text-lg flex items-center gap-2">
+                        <span className="text-sm">🔑</span> {key}
+                      </h4>
+                      <div className="flex gap-2">
+                        <button 
+                          className="btn btn-sm btn-primary"
+                          onClick={() => handleDecrypt(key)}
+                        >
+                          <span className="text-xs">🔓</span> Decrypt
+                        </button>
+                        <button 
+                          className="btn btn-sm btn-error"
+                          onClick={() => handleDelete(key)}
+                        >
+                          <span className="text-xs">🗑️</span> Delete
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3">
+                      <div className="mb-3">
+                        <h5 className="text-sm font-medium mb-1 flex items-center gap-1">
+                          <span className="text-xs">🔒</span> Encrypted Data
+                        </h5>
+                        <pre className="bg-base-300 p-2 rounded text-xs overflow-x-auto whitespace-pre-wrap">
+                          {typeof storedData[key] === 'string' 
+                            ? storedData[key].substring(0, 100) + (storedData[key].length > 100 ? '...' : '')
+                            : JSON.stringify(storedData[key], null, 2)}
+                        </pre>
+                      </div>
+                      
+                      {decryptedData[key] && (
+                        <div>
+                          <h5 className="text-sm font-medium mb-1 flex items-center gap-1">
+                            <span className="text-xs">🔓</span> Decrypted Value
+                          </h5>
+                          <pre className="bg-base-300 p-2 rounded text-xs overflow-x-auto whitespace-pre-wrap">
+                            {decryptedData[key]}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

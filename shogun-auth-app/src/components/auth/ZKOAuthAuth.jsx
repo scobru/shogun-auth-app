@@ -116,69 +116,81 @@ const ZKOAuthAuth = ({ onLogin, onRegister }) => {
   };
 
   return (
-    <div className="zkoauth-auth">
-      <h3>🔐 Autenticazione Zero-Knowledge OAuth</h3>
+    <div className="card bg-base-200 p-6 my-4">
+      <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+        <span className="text-lg">🔐</span> Autenticazione Zero-Knowledge OAuth
+      </h3>
       
-      <div className="provider-selector">
-        <label>
-          <input
-            type="radio"
-            value="google"
-            checked={provider === "google"}
-            onChange={() => setProvider("google")}
-          />
-          Google
-        </label>
-        
-        <label>
-          <input
-            type="radio"
-            value="github"
-            checked={provider === "github"}
-            onChange={() => setProvider("github")}
-            disabled
-          />
-          GitHub (prossimamente)
-        </label>
-        
-        <label>
-          <input
-            type="radio"
-            value="discord"
-            checked={provider === "discord"}
-            onChange={() => setProvider("discord")}
-            disabled
-          />
-          Discord (prossimamente)
-        </label>
+      <div className="form-control mb-4">
+        <div className="flex flex-wrap gap-3 mb-4">
+          <label className="label cursor-pointer gap-2 bg-base-300 px-4 py-2 rounded-lg">
+            <input
+              type="radio"
+              value="google"
+              checked={provider === "google"}
+              onChange={() => setProvider("google")}
+              className="radio radio-primary"
+            />
+            <span className="label-text">Google</span>
+          </label>
+          
+          <label className="label cursor-pointer gap-2 bg-base-300 px-4 py-2 rounded-lg opacity-50">
+            <input
+              type="radio"
+              value="github"
+              checked={provider === "github"}
+              onChange={() => setProvider("github")}
+              disabled
+              className="radio radio-primary"
+            />
+            <span className="label-text">GitHub (prossimamente)</span>
+          </label>
+          
+          <label className="label cursor-pointer gap-2 bg-base-300 px-4 py-2 rounded-lg opacity-50">
+            <input
+              type="radio"
+              value="discord"
+              checked={provider === "discord"}
+              onChange={() => setProvider("discord")}
+              disabled
+              className="radio radio-primary"
+            />
+            <span className="label-text">Discord (prossimamente)</span>
+          </label>
+        </div>
       </div>
       
-      <div className="button-group">
+      <div className="flex flex-col sm:flex-row gap-3">
         <button 
           onClick={handleLogin}
           disabled={loading || !pkceReady}
+          className="btn btn-primary flex-1"
         >
-          {loading ? 'Caricamento...' : `🔓 Login con ${provider.charAt(0).toUpperCase() + provider.slice(1)}`}
+          {loading ? <span className="loading loading-spinner"></span> : '🔓'} Login con {provider.charAt(0).toUpperCase() + provider.slice(1)}
         </button>
         
         <button 
           onClick={handleRegister}
           disabled={loading || !pkceReady}
+          className="btn btn-secondary flex-1"
         >
-          {loading ? 'Caricamento...' : `📝 Registra con ${provider.charAt(0).toUpperCase() + provider.slice(1)}`}
+          {loading ? <span className="loading loading-spinner"></span> : '📝'} Registra con {provider.charAt(0).toUpperCase() + provider.slice(1)}
         </button>
       </div>
 
       {error && (
-        <div className="error-message">
-          ❌ {error}
+        <div className="alert alert-error mt-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{error}</span>
         </div>
       )}
       
       {debug && (
-        <details className="debug-info" open>
-          <summary>Debug Info</summary>
-          <pre>{debug}</pre>
+        <details className="collapse collapse-arrow bg-base-300 mt-4">
+          <summary className="collapse-title font-medium">Debug Info</summary>
+          <div className="collapse-content">
+            <pre className="text-xs whitespace-pre-wrap bg-base-200 p-2 rounded-md">{debug}</pre>
+          </div>
         </details>
       )}
     </div>

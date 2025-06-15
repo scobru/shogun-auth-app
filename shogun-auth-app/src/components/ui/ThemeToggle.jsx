@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 const ThemeToggle = () => {
   // List of available themes
-  const themes = ["light", "dark", "cyberpunk", "business", "night"];
+  const themes = ["light", "dark"];
   
   // Get theme from localStorage or default to "light"
   const getInitialTheme = () => {

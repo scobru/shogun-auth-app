@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   // Base configuration
@@ -60,7 +61,7 @@ export default defineConfig({
   },
 
   // Plugins
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
 
   // Resolve configuration
   resolve: {

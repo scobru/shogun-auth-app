@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuthContext } from '../../context/AuthContext';
 import { useVault } from '../../hooks/useVault';
-import '../../styles/vault.css';
 
 const Vault = () => {
   const { shogun, authStatus } = useAuthContext();
@@ -42,9 +41,11 @@ const Vault = () => {
   
   if (loading) {
     return (
-      <div className="vault-container">
-        <div className="loading-spinner"></div>
-        <p>Loading vault...</p>
+      <div className="card bg-base-100 shadow-xl p-6">
+        <div className="flex justify-center">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+        <p className="text-center mt-4">Loading vault...</p>
       </div>
     );
   }
@@ -52,125 +53,126 @@ const Vault = () => {
   // If vault functionality is not available
   if (!isVaultAvailable) {
     return (
-      <div className="vault-container">
-        <div className="vault-header">
-          <h2 className="vault-title">
-            <span className="vault-icon">🔒</span> Secure Vault
+      <div className="card bg-base-100 shadow-xl p-6">
+        <div className="card-body">
+          <h2 className="card-title flex items-center gap-2">
+            <span className="text-xl">🔒</span> Secure Vault
           </h2>
-        </div>
-        <div className="vault-error">
-          <p>Vault functionality is not available in this version of Shogun.</p>
-          <p>Please check your configuration or contact support.</p>
+          <div className="alert alert-error">
+            <p>Vault functionality is not available in this version of Shogun.</p>
+            <p>Please check your configuration or contact support.</p>
+          </div>
         </div>
       </div>
     );
   }
   
   return (
-    <div className="vault-container">
-      <div className="vault-header">
-        <h2 className="vault-title">
-          <span className="vault-icon">🔒</span> Secure Vault
+    <div className="card bg-base-100 shadow-xl p-6">
+      <div className="card-body">
+        <h2 className="card-title flex items-center gap-2">
+          <span className="text-xl">🔒</span> Secure Vault
         </h2>
         
-        <div className="vault-status">
-          <div className={`status-indicator ${vaultStatus.isInitialized ? 'active' : 'inactive'}`}>
+        <div className="flex justify-center gap-4 mb-6">
+          <div className={`badge ${vaultStatus.isInitialized ? "badge-success" : "badge-error"} p-4 text-base font-medium`}>
             {vaultStatus.isInitialized ? 'Initialized' : 'Not Initialized'}
           </div>
           
           {vaultStatus.isInitialized && (
-            <div className={`status-indicator ${!vaultStatus.isLocked ? 'active' : 'inactive'}`}>
+            <div className={`badge ${!vaultStatus.isLocked ? "badge-success" : "badge-error"} p-4 text-base font-medium`}>
               {vaultStatus.isLocked ? 'Locked' : 'Unlocked'}
             </div>
           )}
         </div>
+      
+        {error && (
+          <div className="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span>{error}</span>
+            <button onClick={clearError} className="btn btn-sm btn-circle">✕</button>
+          </div>
+        )}
+      
+        {!vaultStatus.isInitialized ? (
+          <div className="card bg-base-200 p-6">
+            <h3 className="text-xl font-semibold mb-4">Initialize Your Vault</h3>
+            <p className="mb-4">Create a password to secure your encrypted data.</p>
+          
+            <div className="form-control">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Create a secure password"
+                className="input input-bordered w-full mb-4"
+              />
+            
+              <button 
+                onClick={handleInitializeVault} 
+                disabled={!password}
+                className="btn btn-primary"
+              >
+                Initialize Vault
+              </button>
+            </div>
+          </div>
+        ) : vaultStatus.isLocked ? (
+          <div className="card bg-base-200 p-6">
+            <h3 className="text-xl font-semibold mb-4">Unlock Your Vault</h3>
+            <p className="mb-4">Enter your password to access your encrypted data.</p>
+          
+            <div className="form-control">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="input input-bordered w-full mb-4"
+              />
+            
+              <button 
+                onClick={handleUnlockVault} 
+                disabled={!password}
+                className="btn btn-primary"
+              >
+                Unlock Vault
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex justify-end">
+              <button onClick={lockVault} className="btn btn-warning">
+                Lock Vault
+              </button>
+            </div>
+          
+            <div className="card bg-base-200 p-6">
+              <h3 className="text-xl font-semibold mb-4">Your Encrypted Data</h3>
+            
+              {vaultData.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-base-content/70">No data in your vault yet.</p>
+                  <p className="text-base-content/70">Use the Encrypted Data Manager to add encrypted items.</p>
+                </div>
+              ) : (
+                <ul className="space-y-4">
+                  {vaultData.map((item, index) => (
+                    <li key={index} className="card bg-base-100 p-4">
+                      <div className="card-body p-2">
+                        <h4 className="card-title text-base">{item.name || 'Unnamed Item'}</h4>
+                        <div className="badge badge-secondary">{item.type || 'Unknown'}</div>
+                        <p className="text-sm text-base-content/70">{item.description || 'No description'}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
       </div>
-      
-      {error && (
-        <div className="error-message">
-          <p>{error}</p>
-          <button onClick={clearError} className="dismiss-error">✕</button>
-        </div>
-      )}
-      
-      {!vaultStatus.isInitialized ? (
-        <div className="vault-setup">
-          <h3>Initialize Your Vault</h3>
-          <p>Create a password to secure your encrypted data.</p>
-          
-          <div className="vault-form">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Create a secure password"
-              className="vault-input"
-            />
-            
-            <button 
-              onClick={handleInitializeVault} 
-              disabled={!password}
-              className="vault-button"
-            >
-              Initialize Vault
-            </button>
-          </div>
-        </div>
-      ) : vaultStatus.isLocked ? (
-        <div className="vault-unlock">
-          <h3>Unlock Your Vault</h3>
-          <p>Enter your password to access your encrypted data.</p>
-          
-          <div className="vault-form">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="vault-input"
-            />
-            
-            <button 
-              onClick={handleUnlockVault} 
-              disabled={!password}
-              className="vault-button"
-            >
-              Unlock Vault
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="vault-content">
-          <div className="vault-actions">
-            <button onClick={lockVault} className="lock-button">
-              Lock Vault
-            </button>
-          </div>
-          
-          <div className="vault-data">
-            <h3>Your Encrypted Data</h3>
-            
-            {vaultData.length === 0 ? (
-              <div className="empty-vault">
-                <p>No data in your vault yet.</p>
-                <p>Use the Encrypted Data Manager to add encrypted items.</p>
-              </div>
-            ) : (
-              <ul className="data-list">
-                {vaultData.map((item, index) => (
-                  <li key={index} className="data-item">
-                    <div className="data-header">
-                      <h4>{item.name || 'Unnamed Item'}</h4>
-                      <span className="data-type">{item.type || 'Unknown'}</span>
-                    </div>
-                    <p className="data-description">{item.description || 'No description'}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

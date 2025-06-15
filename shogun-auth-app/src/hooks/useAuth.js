@@ -116,15 +116,35 @@ export const useAuth = (gunInstance) => {
         // Controlla prima il flag in sessionStorage (impostato da OAuthCallback)
         const authFlag = sessionStorage.getItem('shogun_authenticated');
         
+        // Verifica se esiste un pair salvato in sessionStorage
+        const storedPair = sessionStorage.getItem('shogun_user_pair');
+        let userPair = null;
+        
+        if (storedPair) {
+          try {
+            userPair = JSON.parse(storedPair);
+            console.log("Found stored user pair in sessionStorage");
+            
+            // Autenticare l'utente con il pair salvato
+            if (userPair && userPair.pub && userPair.priv) {
+              console.log("Authenticating with stored pair");
+              shogun.gun.user().auth(userPair);
+            }
+          } catch (e) {
+            console.error("Error parsing stored user pair:", e);
+          }
+        }
+        
         // Verifica con l'API di Shogun
-        const isLoggedIn = shogun.isLoggedIn() || authFlag === 'true';
+        const isLoggedIn = shogun.isLoggedIn() || authFlag === 'true' || !!userPair;
         console.log("Auth check - user logged in:", isLoggedIn, 
                     "| Shogun says:", shogun.isLoggedIn(), 
-                    "| Auth flag:", authFlag === 'true');
+                    "| Auth flag:", authFlag === 'true',
+                    "| Has stored pair:", !!userPair);
         
         if (isLoggedIn) {
           // Ottieni informazioni utente
-          const userPub = shogun.user?.is?.pub;
+          const userPub = shogun.user?.is?.pub || (userPair ? userPair.pub : null);
           const username = localStorage.getItem('shogun_username') || userPub;
           const authMethod = localStorage.getItem('shogun_auth_method') || 'standard';
           
@@ -136,6 +156,12 @@ export const useAuth = (gunInstance) => {
             method: authMethod,
             error: null
           });
+          
+          // Salva il pair dell'utente in sessionStorage se non è già presente e se è disponibile
+          if (!storedPair && shogun.user && shogun.user._.sea) {
+            sessionStorage.setItem('shogun_user_pair', JSON.stringify(shogun.user._.sea));
+            console.log("Saved user pair to sessionStorage");
+          }
           
           // Dopo un breve ritardo, prova a chiamare user per assicurarsi che il DB locale sia aggiornato
           setTimeout(() => {
@@ -166,6 +192,12 @@ export const useAuth = (gunInstance) => {
       // Salva in localStorage per recupero futuro
       localStorage.setItem('shogun_username', data.username);
       localStorage.setItem('shogun_auth_method', data.method || 'standard');
+      
+      // Salva il pair dell'utente in sessionStorage se disponibile
+      if (shogun.user && shogun.user._.sea) {
+        sessionStorage.setItem('shogun_user_pair', JSON.stringify(shogun.user._.sea));
+        console.log("Saved user pair to sessionStorage after login");
+      }
     });
 
     shogun.on("auth:logout", () => {
@@ -179,6 +211,8 @@ export const useAuth = (gunInstance) => {
       });
       localStorage.removeItem('shogun_username');
       localStorage.removeItem('shogun_auth_method');
+      sessionStorage.removeItem('shogun_authenticated');
+      sessionStorage.removeItem('shogun_user_pair'); // Rimuovi il pair quando l'utente fa logout
     });
     
     return () => {
@@ -301,6 +335,12 @@ export const useAuth = (gunInstance) => {
       // Save auth method for later retrieval
       localStorage.setItem('shogun_auth_method', authMethod);
       
+      // Save user pair to sessionStorage if available
+      if (shogun.user && shogun.user._.sea) {
+        sessionStorage.setItem('shogun_user_pair', JSON.stringify(shogun.user._.sea));
+        console.log("Saved user pair to sessionStorage after login");
+      }
+      
       return user;
     } catch (error) {
       setAuthStatus(prev => ({
@@ -394,6 +434,12 @@ export const useAuth = (gunInstance) => {
       // Save auth method for later retrieval
       localStorage.setItem('shogun_auth_method', authMethod);
       
+      // Save user pair to sessionStorage if available
+      if (shogun.user && shogun.user._.sea) {
+        sessionStorage.setItem('shogun_user_pair', JSON.stringify(shogun.user._.sea));
+        console.log("Saved user pair to sessionStorage after registration");
+      }
+      
       return user;
     } catch (error) {
       setAuthStatus(prev => ({
@@ -422,6 +468,7 @@ export const useAuth = (gunInstance) => {
       localStorage.removeItem('shogun_username');
       localStorage.removeItem('shogun_auth_method');
       sessionStorage.removeItem('shogun_authenticated');
+      sessionStorage.removeItem('shogun_user_pair'); // Clear the stored pair on logout
     } catch (error) {
       setAuthStatus(prev => ({ ...prev, error: error.message }));
       throw error;
@@ -436,4 +483,4 @@ export const useAuth = (gunInstance) => {
     register,
     logout
   };
-}; 
+};

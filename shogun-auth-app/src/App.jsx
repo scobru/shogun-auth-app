@@ -9,8 +9,6 @@ import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { useAuth } from "./hooks/useAuth";
 import { useVault } from "./hooks/useVault";
 import { ThemeToggle } from "./components/ui";
-import "./styles/auth.css";
-import "./styles/vault.css";
 import "./index.css"; // Import Tailwind CSS
 
 
@@ -19,12 +17,23 @@ const UserInfo = ({ authStatus }) => {
   if (!authStatus.isLoggedIn) return null;
   
   return (
-    <div className="user-info-panel">
-      <h3>👤 User Information</h3>
-      <div className="user-info-content">
-        <p><strong>Username:</strong> {authStatus.username || "N/A"}</p>
-        <p><strong>Public Key:</strong> <span className="pubkey">{authStatus.userPub ? authStatus.userPub.substring(0, 12) + '...' : "Not available"}</span></p>
-        <p><strong>Auth Method:</strong> {authStatus.method || "Standard"}</p>
+    <div className="card bg-base-100 shadow-xl mb-6">
+      <div className="card-body">
+        <h3 className="card-title">User Information</h3>
+        <div className="grid grid-cols-1 gap-2">
+          <div className="flex items-center">
+            <span className="font-semibold mr-2">Username:</span>
+            <span className="badge badge-primary">{authStatus.username || "N/A"}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="font-semibold mr-2">Public Key:</span>
+            <span className="badge badge-secondary font-mono">{authStatus.userPub ? authStatus.userPub.substring(0, 12) + '...' : "Not available"}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="font-semibold mr-2">Auth Method:</span>
+            <span className="badge badge-accent">{authStatus.method || "Standard"}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -247,7 +256,7 @@ function AuthApp() {
 
     return (
       <div className="proof-requests">
-        <h3>🔐 Richieste Proof Pendenti</h3>
+        <h3>Richieste Proof Pendenti</h3>
         {Array.from(pendingRequests.entries()).map(([id, request]) => (
           <div key={id} className="proof-request-card">
             <div className="request-info">
@@ -271,9 +280,9 @@ function AuthApp() {
                   !vaultStatus.keypair ? "Vault non inizializzato" : ""
                 }
               >
-                ✅ Approva
+                Approva
               </button>
-              <button onClick={() => rejectProofRequest(id)}>❌ Rifiuta</button>
+              <button onClick={() => rejectProofRequest(id)}>Rifiuta</button>
             </div>
           </div>
         ))}
@@ -287,7 +296,6 @@ function AuthApp() {
     return (
       <div className="stored-proofs">
         <h3>
-          <span className="section-icon">📋</span>
           Proof Archiviate ({storedProofs.length})
         </h3>
         <div className="proofs-list">
@@ -308,7 +316,7 @@ function AuthApp() {
                     `${proof.data.substring(0, 20)}...` : 'Firma complessa'}
                 </p>
               </div>
-              <button onClick={() => verifyProof(proof.id)}>🔍 Verifica</button>
+              <button onClick={() => verifyProof(proof.id)}>Verifica</button>
             </div>
           ))}
         </div>
@@ -317,149 +325,172 @@ function AuthApp() {
   };
 
   const MainApp = () => (
-    <div className="app">
-      {/* Decorative elements */}
-      <div className="decorative-shape shape-1"></div>
-      <div className="decorative-shape shape-2"></div>
-      <div className="decorative-shape shape-3"></div>
-      <div className="decorative-shape shape-4"></div>
-      <div className="decorative-shape shape-5"></div>
-      
-      <header className="header flex justify-between items-center">
-        <div>
-          <h1 className="title">🥷 Shogun Auth</h1>
-          <p className="subtitle">Secure, decentralized authentication and data storage with GunDB</p>
+    <div className="container mx-auto px-4 py-8 min-h-screen">
+      <header className="navbar bg-base-100 shadow-lg rounded-box mb-8">
+        <div className="navbar-start">
+          <h1 className="text-2xl font-bold ml-4">🥷 Shogun Auth</h1>
         </div>
-        <ThemeToggle />
+        <div className="navbar-center">
+          <p className="text-sm opacity-75">Secure, decentralized authentication</p>
+        </div>
+        <div className="navbar-end">
+          <ThemeToggle />
+        </div>
       </header>
 
-      <div className="auth-status-container">
-        <div className={`status-indicator ${authStatus.isLoggedIn ? "authenticated" : "not-authenticated"}`}>
-          {authStatus.isLoggedIn ? "✅ Autenticato" : "❌ Non autenticato"}
+      <div className="flex justify-center gap-4 mb-6">
+        <div className={`badge ${authStatus.isLoggedIn ? "badge-success" : "badge-error"} p-4 text-base font-medium`}>
+          {authStatus.isLoggedIn ? "Autenticato" : "Non autenticato"}
         </div>
-        <div className={`status-indicator ${vaultStatus.isInitialized ? "authenticated" : "not-authenticated"}`}>
-          {vaultStatus.isInitialized ? "🔓 Vault inizializzato" : "🔒 Vault non inizializzato"}
+        <div className={`badge ${vaultStatus.isInitialized ? "badge-success" : "badge-error"} p-4 text-base font-medium`}>
+          {vaultStatus.isInitialized ? "Vault inizializzato" : "Vault non inizializzato"}
         </div>
       </div>
       
       {/* Display user info after login */}
       {authStatus.isLoggedIn && <UserInfo authStatus={authStatus} />}
 
-      <div className="auth-section">
-        <h2>🔐 Autenticazione</h2>
+      <div className="card bg-base-100 shadow-xl mb-6">
+        <div className="card-body">
+          <h2 className="card-title text-2xl">Autenticazione</h2>
         
-        <div className="auth-methods">
-          <h3>Metodo di Autenticazione</h3>
-          <div className="method-selector">
-            <label>
-              <input
-                type="radio"
-                value="password"
-                checked={selectedAuthMethod === "password"}
-                onChange={(e) => setSelectedAuthMethod(e.target.value)}
-              />
-              Password
-            </label>
-            
-            {authMethods.webauthn && (
-              <label>
-                <input
-                  type="radio"
-                  value="webauthn"
-                  checked={selectedAuthMethod === "webauthn"}
-                  onChange={(e) => setSelectedAuthMethod(e.target.value)}
-                />
-                WebAuthn (Biometrico)
-              </label>
-            )}
-            
-            {authMethods.web3 && (
-              <label>
-                <input
-                  type="radio"
-                  value="web3"
-                  checked={selectedAuthMethod === "web3"}
-                  onChange={(e) => setSelectedAuthMethod(e.target.value)}
-                />
-                MetaMask
-              </label>
-            )}
-            
-            {authMethods.nostr && (
-              <label>
-                <input
-                  type="radio"
-                  value="nostr"
-                  checked={selectedAuthMethod === "nostr"}
-                  onChange={(e) => setSelectedAuthMethod(e.target.value)}
-                />
-                Bitcoin/Nostr
-              </label>
-            )}
-            
-            {/* Sempre visibile, indipendentemente dalla disponibilità del plugin */}
-            <label>
-              <input
-                type="radio"
-                value="oauth"
-                checked={selectedAuthMethod === "oauth"}
-                onChange={(e) => setSelectedAuthMethod(e.target.value)}
-              />
-              Google OAuth
-            </label>
+        {/* Logout button when logged in */}
+        {authStatus.isLoggedIn ? (
+          <div className="flex justify-center my-4">
+            <button 
+              onClick={logout}
+              className="btn btn-error gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Logout
+            </button>
           </div>
-        </div>
-
-        {selectedAuthMethod === "password" && (
-          <div className="form-group">
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <div className="button-group">
-              <button onClick={handlePasswordLogin}>Login</button>
-              <button onClick={handlePasswordSignUp}>Registrati</button>
-              <button onClick={logout}>Logout</button>
+        ) : (
+          /* Show authentication methods and form only when not logged in */
+          <>
+            <div className="card-body">
+              <h3 className="text-lg font-medium mb-4">Metodo di Autenticazione</h3>
+              <div className="join join-vertical lg:join-horizontal w-full">
+                <input 
+                  className="join-item btn" 
+                  type="radio"
+                  name="auth-method"
+                  aria-label="Password"
+                  value="password"
+                  checked={selectedAuthMethod === "password"}
+                  onChange={(e) => setSelectedAuthMethod(e.target.value)}
+                />
+                
+                {authMethods.webauthn && (
+                  <input 
+                    className="join-item btn" 
+                    type="radio"
+                    name="auth-method"
+                    aria-label="WebAuthn"
+                    value="webauthn"
+                    checked={selectedAuthMethod === "webauthn"}
+                    onChange={(e) => setSelectedAuthMethod(e.target.value)}
+                  />
+                )}
+                
+                {authMethods.web3 && (
+                  <input 
+                    className="join-item btn" 
+                    type="radio"
+                    name="auth-method"
+                    aria-label="Web3"
+                    value="web3"
+                    checked={selectedAuthMethod === "web3"}
+                    onChange={(e) => setSelectedAuthMethod(e.target.value)}
+                  />
+                )}
+                
+                {authMethods.nostr && (
+                  <input 
+                    className="join-item btn" 
+                    type="radio"
+                    name="auth-method"
+                    aria-label="Bitcoin/Nostr"
+                    value="nostr"
+                    checked={selectedAuthMethod === "nostr"}
+                    onChange={(e) => setSelectedAuthMethod(e.target.value)}
+                  />
+                )}
+                
+                <input 
+                  className="join-item btn" 
+                  type="radio"
+                  name="auth-method"
+                  aria-label="Google OAuth"
+                  value="oauth"
+                  checked={selectedAuthMethod === "oauth"}
+                  onChange={(e) => setSelectedAuthMethod(e.target.value)}
+                />
+              </div>
             </div>
-          </div>
-        )}
 
-        {selectedAuthMethod === "webauthn" && (
-          <WebAuthnAuth
-            username={username}
-            onLogin={handleWebAuthnLogin}
-            onRegister={handleWebAuthnRegister}
-          />
-        )}
+            {selectedAuthMethod === "password" && (
+              <div className="form-control gap-3 mt-4">
+                <label className="input input-bordered flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" /></svg>
+                  <input
+                    type="text"
+                    className="grow"
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </label>
+                <label className="input input-bordered flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4 opacity-70"><path fillRule="evenodd" d="M14 6a4 4 0 0 1-4.899 3.899l-1.955 1.955a.5.5 0 0 1-.353.146H5v1.5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2.293a.5.5 0 0 1 .146-.353l3.955-3.955A4 4 0 1 1 14 6Zm-4-2a.75.75 0 0 0 0 1.5.5.5 0 0 1 .5.5.75.75 0 0 0 1.5 0 2 2 0 0 0-2-2Z" clipRule="evenodd" /></svg>
+                  <input
+                    type="password"
+                    className="grow"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </label>
+                <div className="flex justify-center gap-4 mt-2">
+                  <button onClick={handlePasswordLogin} className="btn btn-primary">Login</button>
+                  <button onClick={handlePasswordSignUp} className="btn btn-secondary">Registrati</button>
+                </div>
+              </div>
+            )}
 
-        {selectedAuthMethod === "web3" && (
-          <Web3Auth
-            onLogin={handleWeb3Login}
-            onRegister={handleWeb3Register}
-          />
-        )}
+            {selectedAuthMethod === "webauthn" && (
+              <WebAuthnAuth
+                username={username}
+                onLogin={handleWebAuthnLogin}
+                onRegister={handleWebAuthnRegister}
+              />
+            )}
 
-        {selectedAuthMethod === "nostr" && (
-          <NostrAuth
-            onLogin={handleNostrLogin}
-            onRegister={handleNostrRegister}
-          />
+            {selectedAuthMethod === "web3" && (
+              <Web3Auth
+                onLogin={handleWeb3Login}
+                onRegister={handleWeb3Register}
+              />
+            )}
+
+            {selectedAuthMethod === "nostr" && (
+              <NostrAuth
+                onLogin={handleNostrLogin}
+                onRegister={handleNostrRegister}
+              />
+            )}
+            
+            {selectedAuthMethod === "oauth" && (
+              <ZKOAuthAuth
+                onLogin={handleOAuthLogin}
+                onRegister={handleOAuthRegister}
+              />
+            )}
+          </>
         )}
-        
-        {selectedAuthMethod === "oauth" && (
-          <ZKOAuthAuth
-            onLogin={handleOAuthLogin}
-            onRegister={handleOAuthRegister}
-          />
-        )}
+        </div>
       </div>
       
       {/* Add Encrypted Data Manager when user is logged in */}
@@ -475,14 +506,16 @@ function AuthApp() {
       <StoredProofsList />
 
       {authStatus.error && (
-        <div className="error-message">
-          ❌ {authStatus.error}
+        <div className="alert alert-error shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{authStatus.error}</span>
         </div>
       )}
 
       {vaultStatus.error && (
-        <div className="error-message">
-          ❌ {vaultStatus.error}
+        <div className="alert alert-error shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{vaultStatus.error}</span>
         </div>
       )}
     </div>

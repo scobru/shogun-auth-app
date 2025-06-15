@@ -30,6 +30,7 @@
   "license": "MIT",
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.10",
+    "@tailwindcss/vite": "^4.1.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "daisyui": "^5.0.43",
