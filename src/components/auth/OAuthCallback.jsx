@@ -1,0 +1,237 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+
+const OAuthCallback = ({ shogun }) => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [status, setStatus] = useState('Elaborazione dell\'autenticazione...');
+  const [error, setError] = useState(null);
+  const [errorDetails, setErrorDetails] = useState(null);
+  const [tokenData, setTokenData] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
+  
+  // Add a ref to track if authentication is in progress or completed
+  const authInProgressRef = useRef(false);
+  // Add a ref to track if redirect is scheduled
+  const redirectScheduledRef = useRef(false);
+
+  // Force redirect after 5 seconds regardless of authentication state
+  useEffect(() => {
+    const forceRedirectTimer = setTimeout(() => {
+      console.log('Forcing redirect after timeout');
+      if (!redirectScheduledRef.current) {
+        redirectScheduledRef.current = true;
+        navigate('/');
+      }
+    }, 5000);
+    
+    return () => clearTimeout(forceRedirectTimer);
+  }, [navigate]);
+
+  useEffect(() => {
+    const processOAuthCallback = async () => {
+      // Prevent duplicate authentication attempts
+      if (authInProgressRef.current) {
+        console.log('Authentication already in progress, skipping duplicate attempt');
+        return;
+      }
+      
+      // Mark authentication as in progress
+      authInProgressRef.current = true;
+      
+      try {
+        const code = searchParams.get('code');
+        const state = searchParams.get('state');
+        const provider = searchParams.get('provider') || localStorage.getItem('oauth_provider') || 'google';
+        const error = searchParams.get('error');
+        
+        if (error) {
+          throw new Error(`Errore OAuth: ${error} - ${searchParams.get('error_description') || 'Nessun dettaglio disponibile'}`);
+        }
+        
+        if (!code) {
+          throw new Error('Codice di autorizzazione mancante nella risposta OAuth');
+        }
+
+        setStatus(`Autenticazione con ${provider} in corso...`);
+        
+        // Verify state for CSRF protection
+        const storedState = localStorage.getItem(`oauth_state_${provider}`);
+        if (state && storedState && state !== storedState) {
+          throw new Error('Stato OAuth non valido - possibile attacco CSRF');
+        }
+        
+        // Get the code verifier needed for PKCE
+        const codeVerifier = localStorage.getItem(`oauth_verifier_${provider}`);
+        if (!codeVerifier) {
+          throw new Error('Code verifier non trovato. Riprova l\'autenticazione.');
+        }
+        
+        // Check if shogun is initialized
+        if (!shogun) {
+          setStatus('In attesa dell\'inizializzazione di Shogun...');
+          // Wait for a bit to see if shogun initializes
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // If still not initialized, redirect back to main page
+          if (!shogun) {
+            throw new Error('Shogun non inizializzato. Riprova l\'autenticazione.');
+          }
+        }
+        
+        // Get the OAuth plugin
+        const oAuthPlugin = await shogun.getPlugin("oauth");
+        
+        if (!oAuthPlugin) {
+          throw new Error('Plugin OAuth non trovato.');
+        }
+        
+        // Now store the code verifier in a location where the OAuthConnector can find it
+        // This fixes the CSRF error by ensuring the connector has access to the verifier
+        sessionStorage.setItem(`oauth_verifier_${provider}`, codeVerifier);
+        sessionStorage.setItem(`oauth_state_${provider}`, storedState);
+        
+        // Use the plugin's handleOAuthCallback method
+        setStatus('Completamento autenticazione con OAuth...');
+        const authResult = await oAuthPlugin.handleOAuthCallback(provider, code, state);
+        
+        if (!authResult.success) {
+          throw new Error(`Autenticazione fallita: ${authResult.error}`);
+        }
+        
+        setStatus('Autenticazione completata con successo! Reindirizzamento...');
+        console.log('Authentication successful, scheduling redirect');
+        
+        // Store additional authentication info
+        if (authResult.username) {
+          localStorage.setItem('shogun_username', authResult.username);
+          console.log('Saved username to localStorage:', authResult.username);
+        }
+        
+        if (authResult.userPub) {
+          localStorage.setItem('shogun_userpub', authResult.userPub);
+          console.log('Saved userPub to localStorage:', authResult.userPub);
+        }
+        
+        // Set authentication method as oauth in localStorage
+        localStorage.setItem('shogun_auth_method', 'oauth');
+        console.log('Set auth method in localStorage: oauth');
+
+        // Imposta manualmente il flag di autenticazione in sessionStorage
+        // Questo verrà letto all'avvio dell'app dopo il redirect
+        sessionStorage.setItem('shogun_authenticated', 'true');
+        console.log('Set authentication flag in sessionStorage');
+        
+        // Store user pair in sessionStorage for persistent authentication
+        if (shogun.user && shogun.user._.sea) {
+          sessionStorage.setItem('shogun_user_pair', JSON.stringify(shogun.user._.sea));
+          console.log('Saved user pair to sessionStorage for persistent authentication');
+        } else {
+          console.warn('Could not save user pair to sessionStorage - user._.sea not available');
+        }
+        
+        // Clear stored OAuth data
+        localStorage.removeItem(`oauth_verifier_${provider}`);
+        localStorage.removeItem(`oauth_challenge_${provider}`);
+        localStorage.removeItem(`oauth_state_${provider}`);
+        localStorage.removeItem('oauth_provider');
+        sessionStorage.removeItem(`oauth_verifier_${provider}`);
+        sessionStorage.removeItem(`oauth_state_${provider}`);
+        
+        // Ensure we redirect
+        if (!redirectScheduledRef.current) {
+          redirectScheduledRef.current = true;
+          // Try to redirect synchronously
+          navigate('/');
+          // Also schedule a backup redirect timer in case the navigate doesn't work immediately
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
+        }
+      } catch (err) {
+        console.error('Errore durante il callback OAuth:', err);
+        setError(err.message || 'Si è verificato un errore durante l\'autenticazione');
+        setErrorDetails(err.stack || null);
+        
+        // Ensure we redirect even on error
+        if (!redirectScheduledRef.current) {
+          redirectScheduledRef.current = true;
+          setTimeout(() => navigate('/'), 3000);
+        }
+      }
+    };
+
+    processOAuthCallback();
+  }, [searchParams, shogun, navigate]);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-base-200">
+      <div className="card w-full max-w-md bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title flex items-center justify-center text-2xl mb-6">
+            <span className="text-xl mr-2">🔐</span> Autenticazione OAuth
+          </h2>
+          
+          {!error ? (
+            <div className="text-center">
+              <p className="mb-4">{status}</p>
+              <div className="flex justify-center">
+                <span className="loading loading-spinner loading-lg"></span>
+              </div>
+              
+              {tokenData && (
+                <div className="collapse collapse-arrow bg-base-200 mt-4">
+                  <input type="checkbox" /> 
+                  <div className="collapse-title font-medium">
+                    Token Data
+                  </div>
+                  <div className="collapse-content"> 
+                    <pre className="text-xs whitespace-pre-wrap bg-base-300 p-2 rounded-md">{JSON.stringify(tokenData, null, 2)}</pre>
+                  </div>
+                </div>
+              )}
+              
+              {userInfo && (
+                <div className="collapse collapse-arrow bg-base-200 mt-4">
+                  <input type="checkbox" /> 
+                  <div className="collapse-title font-medium">
+                    User Info
+                  </div>
+                  <div className="collapse-content"> 
+                    <pre className="text-xs whitespace-pre-wrap bg-base-300 p-2 rounded-md">{JSON.stringify(userInfo, null, 2)}</pre>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="alert alert-error mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{error}</span>
+              </div>
+              
+              {errorDetails && (
+                <div className="collapse collapse-arrow bg-base-200 mt-4">
+                  <input type="checkbox" /> 
+                  <div className="collapse-title font-medium">
+                    Dettagli tecnici
+                  </div>
+                  <div className="collapse-content"> 
+                    <pre className="text-xs whitespace-pre-wrap bg-base-300 p-2 rounded-md">{errorDetails}</pre>
+                  </div>
+                </div>
+              )}
+              
+              <p className="mt-4">Reindirizzamento alla pagina principale...</p>
+              <div className="flex justify-center mt-4">
+                <span className="loading loading-spinner loading-md"></span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OAuthCallback; 
