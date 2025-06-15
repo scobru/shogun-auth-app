@@ -38,6 +38,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.6.2",
+    "shogun-button-react": "file:../shogun-button-react",
     "shogun-core": "file:../shogun-core",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.0"
