@@ -1,23 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import {
   ShogunButtonProvider,
   ShogunButton,
-  useShogunAuth,
+  useShogun,
 } from "shogun-button-react";
+
+import { useShogunAuth } from "./hooks/useShogunAuth.js";
 import { ShogunCore } from "shogun-core";
 import OAuthCallback from "./components/OAuthCallback";
 import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { useVault } from "./hooks/useVault";
 import { ThemeToggle } from "./components/ui";
-import { truncate } from "./utils/string";
+import { truncate } from "./utils/string.js";
 
 import "./index.css"; // Import Tailwind CSS
 
 import Gun from "gun/gun";
 import SEA from "gun/sea";
 
-  
 // User Info component to display user details after login
 const UserInfo = ({ authStatus }) => {
   if (!authStatus.isLoggedIn) return null;
@@ -45,7 +46,8 @@ const UserInfo = ({ authStatus }) => {
   );
 };
 
-const MainApp = ({ authStatus, logout, shogun, gunInstance }) => {
+// Main component that manages the app after login
+const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
   const {
     vaultStatus,
     storedProofs,
@@ -56,6 +58,9 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance }) => {
     approveProofRequest,
     rejectProofRequest
   } = useVault(shogun, gunInstance);
+  
+  // Reference to track if a success message has been shown
+  const authSuccessShown = useRef(false);
 
   // Load proofs when logged in
   useEffect(() => {
@@ -66,8 +71,15 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance }) => {
       if (!vaultStatus.keypair) {
         generateKeypair();
       }
+      
+      // Show a success message if OAuth login was just completed
+      if (location?.state?.authSuccess && !authSuccessShown.current) {
+        authSuccessShown.current = true;
+        console.log("OAuth login completed successfully!");
+        // Here you could show a toast or success alert
+      }
     }
-  }, [authStatus.isLoggedIn, loadProofs, vaultStatus.keypair, generateKeypair]);
+  }, [authStatus.isLoggedIn, loadProofs, vaultStatus.keypair, generateKeypair, location]);
 
   // UI Components
   const PendingProofRequests = () => {
@@ -75,20 +87,20 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance }) => {
 
     return (
       <div className="proof-requests">
-        <h3>Richieste Proof Pendenti</h3>
+        <h3>Pending Proof Requests</h3>
         {Array.from(pendingRequests.entries()).map(([id, request]) => (
           <div key={id} className="proof-request-card">
             <div className="request-info">
-              <h4>{request.requestingApp?.name || "App Sconosciuta"}</h4>
+              <h4>{request.requestingApp?.name || "Unknown App"}</h4>
               <p>{request.requestingApp?.description}</p>
               <p>
-                <strong>Tipo:</strong> {request.type}
+                <strong>Type:</strong> {request.type}
               </p>
               <p>
                 <strong>Privacy:</strong> {request.privacy}
               </p>
               <p>
-                <strong>Origine:</strong> {request.origin}
+                <strong>Origin:</strong> {request.origin}
               </p>
             </div>
             <div className="request-actions">
@@ -96,12 +108,12 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance }) => {
                 onClick={() => approveProofRequest(id)}
                 disabled={!vaultStatus.keypair}
                 title={
-                  !vaultStatus.keypair ? "Vault non inizializzato" : ""
+                  !vaultStatus.keypair ? "Vault not initialized" : ""
                 }
               >
-                Approva
+                Approve
               </button>
-              <button onClick={() => rejectProofRequest(id)}>Rifiuta</button>
+              <button onClick={() => rejectProofRequest(id)}>Reject</button>
             </div>
           </div>
         ))}
@@ -115,7 +127,7 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance }) => {
     return (
       <div className="stored-proofs">
         <h3>
-          Proof Archiviate ({storedProofs.length})
+          Stored Proofs ({storedProofs.length})
         </h3>
         <div className="proofs-list">
           {storedProofs.map(proof => (
@@ -127,15 +139,15 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance }) => {
                 </span>
               </div>
               <div className="proof-details">
-                <p><strong>App:</strong> {proof.requestingApp?.name || "Non specificata"}</p>
-                <p><strong>Tipo:</strong> {proof.type}</p>
+                <p><strong>App:</strong> {proof.requestingApp?.name || "Not specified"}</p>
+                <p><strong>Type:</strong> {proof.type}</p>
                 <p><strong>Privacy:</strong> {proof.privacy}</p>
                 <p className="proof-data">
-                  <strong>Firma:</strong> {typeof proof.data === 'string' ? 
-                    `${proof.data.substring(0, 20)}...` : 'Firma complessa'}
+                  <strong>Signature:</strong> {typeof proof.data === 'string' ? 
+                    `${proof.data.substring(0, 20)}...` : 'Complex signature'}
                 </p>
               </div>
-              <button onClick={() => verifyProof(proof.id)}>Verifica</button>
+              <button onClick={() => verifyProof(proof.id)}>Verify</button>
             </div>
           ))}
         </div>
@@ -157,12 +169,9 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance }) => {
         </div>
       </header>
 
-      <div className="flex justify-center gap-4 mb-6">
+      <div className="flex justify-center mb-6">
         <div className={`badge ${authStatus.isLoggedIn ? "badge-success" : "badge-error"} p-4 text-base font-medium`}>
-          {authStatus.isLoggedIn ? "Autenticato" : "Non autenticato"}
-        </div>
-        <div className={`badge ${vaultStatus.isInitialized ? "badge-success" : "badge-error"} p-4 text-base font-medium`}>
-          {vaultStatus.isInitialized ? "Vault inizializzato" : "Vault non inizializzato"}
+          {authStatus.isLoggedIn ? "Authenticated" : "Not authenticated"}
         </div>
       </div>
       
@@ -171,7 +180,7 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance }) => {
 
       <div className="card bg-base-100 shadow-xl mb-6">
         <div className="card-body">
-          <h2 className="card-title text-2xl">Autenticazione</h2>
+          <h2 className="card-title text-2xl">Authentication</h2>
         
         {/* Logout button when logged in */}
         {authStatus.isLoggedIn ? (
@@ -223,18 +232,14 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance }) => {
   );
 };
 
-function AuthApp({ authStatus, logout, shogun, gunInstance }) {
-  return (
-    <Routes>
-      <Route path="/auth/callback" element={<OAuthCallback shogun={shogun} />} />
-      <Route path="/" element={<MainApp authStatus={authStatus} logout={logout} shogun={shogun} gunInstance={gunInstance} />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
-}
+// Wrapper for the MainApp that provides access to useLocation
+const MainAppWithLocation = (props) => {
+  const location = useLocation();
+  return <MainApp {...props} location={location} />;
+};
 
 function ShogunApp({ shogun }) {
-  const options = {
+  const appOptions = {
     appName: "Shogun Auth App",
     shogun,
     authMethods: [
@@ -248,25 +253,41 @@ function ShogunApp({ shogun }) {
   };
 
   const { authStatus, handleLoginSuccess, handleError, handleLogout } =
-    useShogunAuth(options);
+    useShogunAuth(appOptions);
+
+  const providerOptions = {
+    appName: appOptions.appName,
+    theme: appOptions.theme,
+    showOauth: true,
+    showWebauthn: true,
+    showMetamask: true,
+    showNostr: true,
+  };
+  
+  // Debug provider options
+  console.log("ShogunButtonProvider options:", providerOptions);
+  console.log("Shogun SDK plugins:", {
+    web3: shogun?.hasPlugin("web3"),
+    webauthn: shogun?.hasPlugin("webauthn"),
+    oauth: shogun?.hasPlugin("oauth"),
+    nostr: shogun?.hasPlugin("nostr")
+  });
 
   return (
     <Router>
       <ShogunButtonProvider
-        shogun={shogun}
+        sdk={shogun}
+        options={providerOptions}
         onLoginSuccess={handleLoginSuccess}
         onSignupSuccess={handleLoginSuccess}
         onError={handleError}
       >
         <Routes>
-          <Route
-            path="/auth/callback"
-            element={<OAuthCallback shogun={shogun} />}
-          />
+          <Route path="/auth/callback" element={<OAuthCallback shogun={shogun} />} />
           <Route
             path="/"
             element={
-              <AuthApp
+              <MainAppWithLocation
                 authStatus={authStatus}
                 logout={handleLogout}
                 shogun={shogun}
@@ -274,6 +295,7 @@ function ShogunApp({ shogun }) {
               />
             }
           />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ShogunButtonProvider>
     </Router>

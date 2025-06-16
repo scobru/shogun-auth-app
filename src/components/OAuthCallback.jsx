@@ -42,13 +42,36 @@ const OAuthCallback = ({ shogun }) => {
         const result = await oauthPlugin.handleOAuthCallback(provider, code, state);
         
         if (result && result.success) {
-          // The handleOAuthCallback method should fire the 'auth:login' event
-          // which the main provider listens for. We can just navigate home.
-          navigate('/');
+          console.log("OAuth login successful, result:", result);
+          
+          // Force an authentication state update
+          if (shogun.isLoggedIn()) {
+            console.log("User is logged in after OAuth callback, forcing state update");
+            
+            // Emit a custom event to notify the main app
+            const authUpdateEvent = new CustomEvent('shogun:auth:updated', { 
+              detail: { 
+                success: true,
+                userPub: result.userPub || shogun.gun.user().is?.pub,
+                username: result.username || shogun.gun.user().is?.alias,
+                authMethod: 'oauth'
+              } 
+            });
+            window.dispatchEvent(authUpdateEvent);
+            
+            // Brief pause to allow event propagation
+            setTimeout(() => {
+              navigate('/', { state: { authSuccess: true } });
+            }, 500);
+          } else {
+            console.warn("OAuth callback successful but user is not logged in according to shogun.isLoggedIn()");
+            navigate('/');
+          }
         } else {
           setError(result.error || "OAuth login failed during callback.");
         }
       } catch (e) {
+        console.error("OAuth callback error:", e);
         setError(e.message || "An unexpected error occurred during OAuth callback.");
       }
     };
