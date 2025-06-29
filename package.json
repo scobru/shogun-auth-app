@@ -38,8 +38,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.6.2",
-    "shogun-button-react": "latest",
-    "shogun-core": "latest",
+    "shogun-button-react": "^1.3.6",
+    "shogun-core": "^1.3.5",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.0",
     "vercel": "^44.2.7"

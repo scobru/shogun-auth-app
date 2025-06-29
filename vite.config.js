@@ -53,8 +53,7 @@ export default defineConfig({
       },
       output: {
         manualChunks: {
-          vendor: ["gun"],
-          shogun: ["shogun-core"],
+          vendor: ["gun", "shogun-core"],
         },
       },
     },
@@ -67,14 +66,13 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "shogun-core": path.resolve(__dirname, "../shogun-core/src"),
     },
   },
 
   // Optimizations
   optimizeDeps: {
-    include: ["gun", "uuid"],
-    exclude: ["shogun-core"],
+    include: ["gun", "uuid", "shogun-core"],
+    exclude: [],
   },
 
   // Define global constants
