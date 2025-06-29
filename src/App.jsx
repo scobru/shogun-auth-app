@@ -24,7 +24,7 @@ import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { truncate } from "./utils/string.js";
 import { UserInfo } from "./components/UserInfo";
-
+import logo from "./assets/logo.svg";
 import "./index.css"; // Import Tailwind CSS
 
 // Main component that manages the app after login
@@ -249,11 +249,12 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
   }, [authStatus.isLoggedIn, location, redirectUrl, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a1240] to-[#0a0821]">
+    <div className="min-h-screen">
       <header className="navbar-custom">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            Auth
+            <img src={logo} alt="Shogun Auth" className="w-10 h-10" />
+            Shogun Auth App
           </h1>
           <p className="text-secondary">
             Secure, decentralized authentication
@@ -425,12 +426,7 @@ function App() {
   const relays  = [
     "https://ruling-mastodon-improved.ngrok-free.app/gun",
     "https://gun-manhattan.herokuapp.com/gun",
-    "https://peer.wallie.io/gun",
-    "https://gundb-relay-mlccl.ondigitalocean.app/gun",
-    "https://plankton-app-6qfp3.ondigitalocean.app/",
-    "https://gun.defucc.me/gun",
-    "https://a.talkflow.team/gun",
-    "https://talkflow.team/gun",
+    "https://peer.wallie.io/gun"
   ];
 
   Gun.on('opt', function (ctx) {
