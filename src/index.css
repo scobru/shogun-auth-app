@@ -1,0 +1,295 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@import "tailwindcss";
+@plugin "daisyui";
+
+:root {
+  --bg-gradient-dark: linear-gradient(180deg, #1a1240 0%, #0a0821 100%);
+  --color-accent: #4F6BF6;
+  --color-text: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.6);
+  --color-input-bg: rgba(255, 255, 255, 0.05);
+  --color-input-border: rgba(255, 255, 255, 0.1);
+  --color-button: rgba(255, 255, 255, 0.1);
+  --color-card-bg: #151515;
+  --color-error: #ff4444;
+  --color-success: #44ff88;
+  
+  --bg-gradient-light: linear-gradient(180deg, #f0f4ff 0%, #e0e7ff 100%);
+  --color-accent-light: #4F6BF6;
+  --color-text-light: #1a1a2e;
+  --color-text-secondary-light: rgba(26, 26, 46, 0.6);
+  --color-input-bg-light: rgba(26, 26, 46, 0.05);
+  --color-input-border-light: rgba(26, 26, 46, 0.1);
+  --color-button-light: rgba(26, 26, 46, 0.1);
+  --color-card-bg-light: #ffffff;
+  --color-error-light: #e53935;
+  --color-success-light: #43a047;
+  
+  --border-dark: rgba(255, 255, 255, 0.1);
+  --border-light: rgba(26, 26, 46, 0.1);
+}
+
+/* Override DaisyUI dark theme with Wormhole styles */
+[data-theme="dark"] {
+  --bg-gradient: var(--bg-gradient-dark);
+  --btn-text-case: none;
+  
+  /* Base colors */
+  --b1: #1a1240;
+  --b2: #0a0821;
+  --b3: var(--color-card-bg);
+  
+  /* Primary colors */
+  --p: var(--color-accent);
+  --pc: var(--color-text);
+  
+  /* Neutral colors */
+  --n: var(--color-text);
+  --nc: var(--color-text-secondary);
+  
+  /* Background colors */
+  --background-color: var(--b1);
+  
+  /* Input styles */
+  --input-bg: var(--color-input-bg);
+  --input-border: var(--color-input-border);
+  --input-color: var(--color-text);
+  
+  /* Card styles */
+  --card-bg: var(--color-card-bg);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.32);
+  
+  /* Button styles */
+  --btn-bg: var(--color-button);
+  --btn-hover-bg: var(--color-accent);
+  
+  /* Border color */
+  --border-color: var(--border-dark);
+  
+  /* Navbar */
+  --navbar-bg: rgba(0, 0, 0, 0.1);
+  
+  /* Alert colors */
+  --alert-error-bg: rgba(255, 68, 68, 0.1);
+  --alert-success-bg: rgba(68, 255, 136, 0.1);
+  
+  /* Spinner */
+  --spinner-bg: rgba(255, 255, 255, 0.1);
+}
+
+/* Override DaisyUI light theme with Wormhole light styles */
+[data-theme="light"] {
+  --bg-gradient: var(--bg-gradient-light);
+  --btn-text-case: none;
+  
+  /* Base colors */
+  --b1: #f0f4ff;
+  --b2: #e0e7ff;
+  --b3: var(--color-card-bg-light);
+  
+  /* Primary colors */
+  --p: var(--color-accent-light);
+  --pc: #ffffff;
+  
+  /* Neutral colors */
+  --n: var(--color-text-light);
+  --nc: var(--color-text-secondary-light);
+  
+  /* Background colors */
+  --background-color: var(--b1);
+  
+  /* Input styles */
+  --input-bg: var(--color-input-bg-light);
+  --input-border: var(--color-input-border-light);
+  --input-color: var(--color-text-light);
+  
+  /* Card styles */
+  --card-bg: var(--color-card-bg-light);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  
+  /* Button styles */
+  --btn-bg: var(--color-button-light);
+  --btn-hover-bg: var(--color-accent-light);
+  
+  /* Border color */
+  --border-color: var(--border-light);
+  
+  /* Navbar */
+  --navbar-bg: rgba(255, 255, 255, 0.8);
+  
+  /* Alert colors */
+  --alert-error-bg: rgba(229, 57, 53, 0.1);
+  --alert-success-bg: rgba(67, 160, 71, 0.1);
+  
+  /* Spinner */
+  --spinner-bg: rgba(26, 26, 46, 0.1);
+}
+
+/* Base styles */
+body {
+  font-family: "Poppins", sans-serif;
+  min-height: 100vh;
+  background: var(--bg-gradient);
+  margin: 0;
+  padding: 0;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Custom component styles */
+.navbar-custom {
+  background-color: var(--navbar-bg);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 0;
+}
+
+.badge-custom {
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.badge-custom.success {
+  background-color: var(--alert-success-bg);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+.badge-custom.error {
+  background-color: var(--alert-error-bg);
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+}
+
+.alert-custom {
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 1rem;
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.alert-custom.error {
+  background-color: var(--alert-error-bg);
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.alert-custom.success {
+  background-color: var(--alert-success-bg);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.btn-custom {
+  background-color: var(--btn-bg);
+  border: none;
+  border-radius: 12px;
+  color: var(--n);
+  font-weight: 600;
+  text-transform: none;
+  transition: all 0.2s ease;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.btn-custom:hover {
+  background-color: var(--btn-hover-bg);
+  color: var(--pc);
+}
+
+.btn-custom:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loading-custom {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--spinner-bg);
+  border-top-color: var(--p);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Card overrides */
+.card {
+  background-color: var(--card-bg);
+  border-radius: 24px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+}
+
+/* Input overrides */
+.input, .textarea {
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  color: var(--input-color);
+  transition: all 0.2s ease;
+}
+
+.input:focus, .textarea:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(79, 107, 246, 0.2);
+  outline: none;
+}
+
+/* Button overrides */
+.btn {
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: none;
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  background-color: var(--btn-hover-bg);
+}
+
+/* Typography */
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .card {
+    padding: 1rem;
+  }
+}
+
+/* Font variations */
+.font-thin { font-weight: 100; }
+.font-extralight { font-weight: 200; }
+.font-light { font-weight: 300; }
+.font-normal { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.font-extrabold { font-weight: 800; }
+.font-black { font-weight: 900; }
+

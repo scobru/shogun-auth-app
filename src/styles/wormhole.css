@@ -1,0 +1,247 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+:root {
+  /* Dark theme variables */
+  --bg-gradient-dark: linear-gradient(180deg, #1a1240 0%, #0a0821 100%);
+  --color-accent: #4F6BF6;
+  --color-text: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.6);
+  --color-input-bg: rgba(255, 255, 255, 0.05);
+  --color-input-border: rgba(255, 255, 255, 0.1);
+  --color-button: rgba(255, 255, 255, 0.1);
+  --color-card-bg: #151515;
+  --color-error: #ff4444;
+  --color-success: #44ff88;
+  
+  /* Light theme variables */
+  --bg-gradient-light: linear-gradient(180deg, #f0f4ff 0%, #e0e7ff 100%);
+  --color-accent-light: #4F6BF6;
+  --color-text-light: #1a1a2e;
+  --color-text-secondary-light: rgba(26, 26, 46, 0.6);
+  --color-input-bg-light: rgba(26, 26, 46, 0.05);
+  --color-input-border-light: rgba(26, 26, 46, 0.1);
+  --color-button-light: rgba(26, 26, 46, 0.1);
+  --color-card-bg-light: #ffffff;
+  --color-error-light: #e53935;
+  --color-success-light: #43a047;
+  
+  /* Border colors */
+  --border-dark: rgba(255, 255, 255, 0.1);
+  --border-light: rgba(26, 26, 46, 0.1);
+}
+
+/* Override DaisyUI dark theme with Wormhole styles */
+[data-theme="dark"] {
+  --bg-gradient: var(--bg-gradient-dark);
+  --btn-text-case: none;
+  
+  /* Base colors */
+  --b1: #1a1240;
+  --b2: #0a0821;
+  --b3: var(--color-card-bg);
+  
+  /* Primary colors */
+  --p: var(--color-accent);
+  --pc: var(--color-text);
+  
+  /* Neutral colors */
+  --n: var(--color-text);
+  --nc: var(--color-text-secondary);
+  
+  /* Background colors */
+  --background-color: var(--b1);
+  
+  /* Input styles */
+  --input-bg: var(--color-input-bg);
+  --input-border: var(--color-input-border);
+  --input-color: var(--color-text);
+  
+  /* Card styles */
+  --card-bg: var(--color-card-bg);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.32);
+  
+  /* Button styles */
+  --btn-bg: var(--color-button);
+  --btn-hover-bg: var(--color-accent);
+  
+  /* Border color */
+  --border-color: var(--border-dark);
+  
+  /* Alert colors */
+  --alert-error-bg: rgba(255, 68, 68, 0.1);
+  --alert-success-bg: rgba(68, 255, 136, 0.1);
+  
+  /* Spinner */
+  --spinner-bg: rgba(255, 255, 255, 0.1);
+}
+
+/* Override DaisyUI light theme with Wormhole light styles */
+[data-theme="light"] {
+  --bg-gradient: var(--bg-gradient-light);
+  --btn-text-case: none;
+  
+  /* Base colors */
+  --b1: #f0f4ff;
+  --b2: #e0e7ff;
+  --b3: var(--color-card-bg-light);
+  
+  /* Primary colors */
+  --p: var(--color-accent-light);
+  --pc: #ffffff;
+  
+  /* Neutral colors */
+  --n: var(--color-text-light);
+  --nc: var(--color-text-secondary-light);
+  
+  /* Background colors */
+  --background-color: var(--b1);
+  
+  /* Input styles */
+  --input-bg: var(--color-input-bg-light);
+  --input-border: var(--color-input-border-light);
+  --input-color: var(--color-text-light);
+  
+  /* Card styles */
+  --card-bg: var(--color-card-bg-light);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  
+  /* Button styles */
+  --btn-bg: var(--color-button-light);
+  --btn-hover-bg: var(--color-accent-light);
+  
+  /* Border color */
+  --border-color: var(--border-light);
+  
+  /* Alert colors */
+  --alert-error-bg: rgba(229, 57, 53, 0.1);
+  --alert-success-bg: rgba(67, 160, 71, 0.1);
+  
+  /* Spinner */
+  --spinner-bg: rgba(26, 26, 46, 0.1);
+}
+
+/* Base styles */
+body {
+  font-family: "Poppins", sans-serif;
+  min-height: 100vh;
+  background: var(--bg-gradient);
+  margin: 0;
+  padding: 0;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Card styles */
+.card {
+  background-color: var(--card-bg) !important;
+  border-radius: 24px !important;
+  box-shadow: var(--card-shadow) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+/* Input styles */
+.input, .textarea {
+  background-color: var(--input-bg) !important;
+  border: 1px solid var(--input-border) !important;
+  border-radius: 12px !important;
+  color: var(--input-color) !important;
+  transition: all 0.2s ease !important;
+}
+
+.input:focus, .textarea:focus {
+  border-color: var(--p) !important;
+  box-shadow: 0 0 0 2px rgba(79, 107, 246, 0.2) !important;
+  outline: none !important;
+}
+
+/* Button styles */
+.btn {
+  background-color: var(--btn-bg) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  color: var(--n) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn:hover {
+  background-color: var(--btn-hover-bg) !important;
+  color: var(--pc) !important;
+}
+
+.btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Typography */
+.text-secondary {
+  color: var(--nc) !important;
+}
+
+/* Navbar */
+.navbar {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* Alert styles */
+.alert {
+  border-radius: 12px !important;
+  border: 1px solid transparent !important;
+}
+
+.alert-error {
+  background-color: var(--alert-error-bg) !important;
+  border-color: var(--color-error) !important;
+  color: var(--color-error) !important;
+}
+
+.alert-success {
+  background-color: var(--alert-success-bg) !important;
+  border-color: var(--color-success) !important;
+  color: var(--color-success) !important;
+}
+
+/* Badge styles */
+.badge {
+  border-radius: 9999px !important;
+  padding: 0.5rem 1rem !important;
+  font-weight: 500 !important;
+}
+
+.badge.bg-success {
+  background-color: var(--alert-success-bg) !important;
+  color: var(--color-success) !important;
+  border: 1px solid var(--color-success) !important;
+}
+
+.badge.bg-error {
+  background-color: var(--alert-error-bg) !important;
+  color: var(--color-error) !important;
+  border: 1px solid var(--color-error) !important;
+}
+
+/* Loading spinner */
+.loading {
+  border: 3px solid var(--spinner-bg) !important;
+  border-top-color: var(--p) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem !important;
+  }
+  
+  .card {
+    padding: 1rem !important;
+  }
+} 
