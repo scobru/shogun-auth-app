@@ -503,7 +503,7 @@ function App() {
             clientId:
               "15241942495-ftd3cs98qvem6snh6isbabc3adoc9f4p.apps.googleusercontent.com",
             clientSecret: "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",
-            redirectUri: "http://localhost:8080/auth/callback",
+            redirectUri: "https://shogun-auth.vercel.app/auth/callback",
             scope: ["openid", "email", "profile"],
             authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
             tokenUrl: "https://oauth2.googleapis.com/token",
