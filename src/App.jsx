@@ -253,8 +253,8 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
       <header className="navbar-custom">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <img src={logo} alt="Shogun Auth" className="w-10 h-10" />
-            Shogun Auth App
+            <img src={logo} alt="Shogun Auth" className="w-20 h-20" />
+            shogun-auth
           </h1>
           <p className="text-secondary">
             Secure, decentralized authentication
@@ -343,6 +343,35 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <footer className="mt-12 py-8 border-t border-border-color bg-base-200/50">
+        <div className="container mx-auto text-center">
+          
+        <p class="text-gray-400 mb-4">
+        <a
+            href="https://github.com/scobru/shogun-auth-app"
+            class="text-blue-500 hover:text-blue-400"
+            >repo</a
+          >
+          {" - "}
+          build with ❤️ by {""}
+          <a
+            href="https://github.com/scobru"
+            class="text-blue-500 hover:text-blue-400"
+            >scobru</a
+          >
+        </p>
+        <p class="text-gray-400 mb-4">
+          part of {""}
+          <a
+            href="https://shogun-info.vercel.app"
+            class="text-blue-500 hover:text-blue-400"
+            >shogun project</a
+          >
+        </p>
+        </div>
+      </footer>
     </div>
   );
 };
