@@ -254,7 +254,7 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <img src={logo} alt="Shogun Auth" className="w-20 h-20" />
-            shogun-auth
+            auth
           </h1>
           <p className="text-secondary">
             Secure, decentralized authentication
@@ -466,8 +466,8 @@ function App() {
       var to = this.to
       // Adds headers for put
       msg.headers = {
-        token: 'S3RVER',
-        Authorization: 'Bearer S3RVER'
+        token: import.meta.env.VITE_GUN_TOKEN,
+        Authorization: 'Bearer ' + import.meta.env.VITE_GUN_TOKEN
       }
       to.next(msg) // pass to next middleware
     })

@@ -173,17 +173,17 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
   };
 
   return (
-    <div className="card bg-base-100 shadow-xl mb-6">
+    <div className="card mb-6">
       <div className="card-body">
         <h2 className="card-title text-2xl flex items-center gap-2">
           Encrypted Data Vault
         </h2>
-        <p className="text-base-content/70 mb-4">
+        <p className="text-secondary mb-4">
           Store and manage your encrypted data securely. All data is encrypted
           using your personal keys and stored in GunDB.
         </p>
 
-        <div className="card bg-base-200 mb-6">
+        <div className="card mb-6">
           <div className="card-body">
             <h3 className="card-title text-lg flex items-center gap-2">
                Add New Encrypted Data
@@ -195,13 +195,13 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
                 placeholder="Data Key (e.g., 'password', 'api_key')"
                 value={dataKey}
                 onChange={(e) => setDataKey(e.target.value)}
-                className="input input-bordered w-full"
+                className="input w-full"
               />
               <textarea
                 placeholder="Data Value (will be encrypted)"
                 value={dataValue}
                 onChange={(e) => setDataValue(e.target.value)}
-                className="textarea textarea-bordered w-full min-h-[100px]"
+                className="textarea w-full min-h-[100px]"
               />
               <button
                 type="submit"
@@ -211,17 +211,17 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
                   !dataValue.trim() ||
                   isSubmitting
                 }
-                className="btn btn-primary w-full"
+                className="btn-custom w-full"
               >
                 {isSubmitting ? (
-                  <span className="loading loading-spinner"></span>
+                  <span className="loading-custom"></span>
                 ) : null}
                 {isSubmitting ? "Encrypting & Storing..." : "Encrypt & Store"}
               </button>
             </form>
 
             {error && (
-              <div className="alert alert-error mt-4">
+              <div className="alert-custom error mt-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="stroke-current shrink-0 h-6 w-6"
@@ -249,14 +249,14 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
           {Object.keys(storedData).length === 0 ? (
             <div className="text-center py-8 bg-base-200 rounded-lg border border-base-300">
               <span className="text-4xl block mb-3">📭</span>
-              <p className="text-base-content/70">
+              <p className="text-secondary">
                 No encrypted data stored yet. Add your first entry above.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               {Object.keys(storedData).map((key) => (
-                <div className="card bg-base-200" key={key}>
+                <div className="card" key={key}>
                   <div className="card-body p-4">
                     <div className="flex justify-between items-center">
                       <h4 className="font-medium text-lg flex items-center gap-2">
@@ -264,13 +264,13 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
                       </h4>
                       <div className="flex gap-2">
                         <button
-                          className="btn btn-sm btn-primary"
+                          className="btn-custom btn-sm"
                           onClick={() => handleDecrypt(key)}
                         >
                           <span className="text-xs">🔓</span> Decrypt
                         </button>
                         <button
-                          className="btn btn-sm btn-error"
+                          className="btn-custom btn-sm"
                           onClick={() => handleDelete(key)}
                         >
                           <span className="text-xs">🗑️</span> Delete
