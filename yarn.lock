@@ -3605,20 +3605,20 @@ shebang-regex@^3.0.0:
   resolved "https://registry.yarnpkg.com/shebang-regex/-/shebang-regex-3.0.0.tgz#ae16f1644d873ecad843b0307b143362d4c42172"
   integrity sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==
 
-shogun-button-react@^1.3.90:
-  version "1.3.90"
-  resolved "https://registry.yarnpkg.com/shogun-button-react/-/shogun-button-react-1.3.90.tgz#1c28fd4646920db47ee42fb7dc61043bd480e0a1"
-  integrity sha512-bCupVPYt0HntzzCz4+HrkXnpU0IzGPgm+y6p5HahTuaH23STQSebbNKbx+hFsztiMGOMm0kDnDNaIdvJQjukxA==
+shogun-button-react@^1.4.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/shogun-button-react/-/shogun-button-react-1.4.1.tgz#8ace44b736fdda0ad18b4413a98e2843172a0396"
+  integrity sha512-HEwl0hGM8E9hTHcqVILelhlaWQKACDuM+lhVHnMJ4Q9vfr3zbRx4+O5BBf+NhC2caApgSHGqFHMYnE7haY7ObA==
   dependencies:
     ethers "^6.13.5"
     prettier "^3.5.3"
     rxjs "^7.8.1"
-    shogun-core "^1.3.9"
+    shogun-core "^1.4.1"
 
-shogun-core@^1.3.9:
-  version "1.3.9"
-  resolved "https://registry.yarnpkg.com/shogun-core/-/shogun-core-1.3.9.tgz#19a3fe2c13c9a70409fb63bc1a93f55a5711f925"
-  integrity sha512-ahxlQne/k60EILHE541KyDlTzs6AUyIW2A/TaIPO+9Lu2p8cC/ntabkwBHBmk2LBmO460udd50itHX7skqorcg==
+shogun-core@^1.4.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/shogun-core/-/shogun-core-1.4.1.tgz#013558823f4ea79afc8a203fe42636fddae7a501"
+  integrity sha512-bQHMk0b4iQYK9uY7YREsnkAC1iHUftoz3JL92qlgp1PETUFRrzWRHfTaEz9xClHdg33ZlRRrJhU24IjDRxS5ig==
   dependencies:
     "@noble/curves" "^1.9.1"
     ajv "^8.17.1"

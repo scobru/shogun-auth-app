@@ -149,25 +149,25 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
       <footer className="mt-12 py-8 border-t border-border-color bg-base-200/50">
         <div className="container mx-auto text-center">
           
-        <p class="text-gray-400 mb-4">
+        <p className="text-gray-400 mb-4">
         <a
             href="https://github.com/scobru/shogun-auth-app"
-            class="text-blue-500 hover:text-blue-400"
+            className="text-blue-500 hover:text-blue-400"
             >repo</a
           >
           {" - "}
           build with ❤️ by {""}
           <a
             href="https://github.com/scobru"
-            class="text-blue-500 hover:text-blue-400"
+            className="text-blue-500 hover:text-blue-400"
             >scobru</a
           >
         </p>
-        <p class="text-gray-400 mb-4">
+        <p className="text-gray-400 mb-4">
           part of {""}
           <a
             href="https://shogun-info.vercel.app"
-            class="text-blue-500 hover:text-blue-400"
+            className="text-blue-500 hover:text-blue-400"
             >shogun project</a
           >
         </p>
@@ -277,15 +277,17 @@ function App() {
     })
 
     // Create the Gun instance
-    const gunInstance = new Gun({
-      peers: relays,
-      localStorage: false,
-      radisk: false,
-    });
+    // const gunInstance = new Gun({
+    //   peers: relays,
+    //   localStorage: false,
+    //   radisk: false,
+    // });
 
     // Create ShogunCore with the Gun instance and specify scope
     const shogunCore = new ShogunCore({
-      gunInstance: gunInstance,
+      // gunInstance: gunInstance,
+      authToken: import.meta.env.VITE_GUN_TOKEN,
+      peers: relays,
       scope: "shogun", // Use scope instead of getting a chain node
       web3: { enabled: true },
       webauthn: {
@@ -317,7 +319,7 @@ function App() {
       window.shogunDebug = {
         clearAllData: () => shogunCore.clearAllStorageData(),
         sdk: shogunCore,
-        gun: gunInstance
+        gun: shogunCore.gun
       };
       console.log("Debug methods available at window.shogunDebug");
       console.log("Available debug methods:", Object.keys(window.shogunDebug));
