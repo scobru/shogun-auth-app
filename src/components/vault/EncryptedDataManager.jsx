@@ -23,23 +23,25 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
       setLoading(true);
       setError(null);
 
-      const user = shogun.gun.user();
+      // const user = shogun.gun.user();
 
       // Clear previous data
       setStoredData({});
 
       // Load data from Gun
-      await new Promise((resolve) => {
+      await new Promise(async (resolve) => {
         const data = {};
 
-        user.get("shogun")
-          .get("encryptedData")
-          .map()
-          .once((value, key) => {
+        const userData = await shogun.gundb.getUserData("shogun/encryptedData");
+
+        // Handle userData as an object rather than an array
+        if (userData) {
+          Object.entries(userData).forEach(([key, value]) => {
             if (key !== "_" && value !== null) {
               data[key] = value;
             }
           });
+        }
 
         // Wait a bit to ensure we've loaded all data
         setTimeout(() => {
@@ -76,8 +78,16 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
         shogun.user.pair()
       );
 
+      
+
+      await shogun.gundb.saveUserData(
+        "shogun/encryptedData/" + dataKey,
+        encryptedValue
+      );
+
+
       // Save to user's space
-      await new Promise((resolve, reject) => {
+      /* await new Promise((resolve, reject) => {
         user.get("shogun")
           .get("encryptedData")
           .get(dataKey)
@@ -88,7 +98,7 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
               resolve();
             }
           });
-      });
+      }); */
 
       // Update local state
       setStoredData((prev) => ({
@@ -139,7 +149,8 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
 
       // Delete from Gun (set to null)
       await new Promise((resolve, reject) => {
-        user.get("shogun")
+        user
+          .get("shogun")
           .get("encryptedData")
           .get(key)
           .put(null, (ack) => {
@@ -186,7 +197,7 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
         <div className="card mb-6">
           <div className="card-body">
             <h3 className="card-title text-lg flex items-center gap-2">
-               Add New Encrypted Data
+              Add New Encrypted Data
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -213,9 +224,7 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
                 }
                 className="btn-custom w-full"
               >
-                {isSubmitting ? (
-                  <span className="loading-custom"></span>
-                ) : null}
+                {isSubmitting ? <span className="loading-custom"></span> : null}
                 {isSubmitting ? "Encrypting & Storing..." : "Encrypt & Store"}
               </button>
             </form>
