@@ -23,7 +23,7 @@ import OAuthCallback from "./components/OAuthCallback";
 import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { truncate } from "./utils/string.js";
-import { UserInfo } from "./components/UserInfo";
+import UserInfo  from "./components/UserInfo";
 import logo from "./assets/logo.svg";
 import "./index.css"; // Import Tailwind CSS
 
@@ -98,7 +98,7 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
         )}
 
         {/* Display user info after login */}
-        {authStatus.isLoggedIn && <UserInfo authStatus={authStatus} />}
+        {authStatus.isLoggedIn && <UserInfo user={authStatus.user} onLogout={logout} />}
 
         <div className="card mb-6 p-10">
           <div className="p-6">
@@ -197,8 +197,42 @@ function ShogunApp({ shogun }) {
     theme: "dark",
   };
 
-  const { authStatus, handleLoginSuccess, handleError, handleLogout } =
-    useShogunAuth(appOptions);
+  // Fix: Pass the shogun instance directly to useShogunAuth
+  const { 
+    user, 
+    isAuthenticated, 
+    isLoading, 
+    error, 
+    login, 
+    register, 
+    logout, 
+    oauthLogin 
+  } = useShogunAuth(shogun);
+
+  // Create authStatus object from hook return values
+  const authStatus = {
+    user,
+    isLoggedIn: isAuthenticated,
+    isLoading,
+    error
+  };
+
+  // Define handlers using the hook's functions
+  const handleLoginSuccess = (result) => {
+    console.log("Login success:", result);
+  };
+
+  const handleError = (error) => {
+    console.error("Auth error:", error);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
 
   const providerOptions = {
     appName: appOptions.appName,
@@ -255,8 +289,8 @@ function App() {
 
   const relays = [
     "wss://ruling-mastodon-improved.ngrok-free.app/gun",
-    "wss://gun-manhattan.herokuapp.com/gun",
-    "wss://peer.wallie.io/gun"
+    "https://gun-manhattan.herokuapp.com/gun",
+    "https://peer.wallie.io/gun",
   ];
 
   useEffect(() => {
@@ -304,7 +338,6 @@ function App() {
               import.meta.env.VITE_GOOGLE_CLIENT_ID,
             clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
             redirectUri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
-
             scope: ["openid", "email", "profile"],
             authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
             tokenUrl: "https://oauth2.googleapis.com/token",

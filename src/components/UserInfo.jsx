@@ -1,65 +1,147 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 
-export const UserInfo = ({ authStatus }) => {
-  if (!authStatus.isLoggedIn || !authStatus.user) {
+/**
+ * Component to display user information
+ * @param {Object} props - Component props
+ * @param {Object} props.user - User data
+ * @param {Function} props.onLogout - Logout function
+ */
+const UserInfo = ({ user, onLogout }) => {
+  const [showDetails, setShowDetails] = useState(false);
+
+  if (!user) {
     return null;
   }
 
+  const { email, name, picture, oauth, userPub } = user;
+  const displayName = name || email || 'User';
+  
+  // Generate avatar color based on userPub
+  const generateAvatarColor = (pubKey) => {
+    if (!pubKey) return '#4F6BF6'; // Default color
+    
+    // Use the first 6 characters of the pubkey as a hex color
+    const hash = pubKey.slice(0, 6);
+    try {
+      return `#${hash}`;
+    } catch (e) {
+      return '#4F6BF6'; // Fallback color
+    }
+  };
+  
+  // Generate initials for avatar
+  const generateInitials = (name) => {
+    if (!name) return '?';
+    
+    const parts = name.split(/\s+/);
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+  
+  // Create a generated avatar if no picture is available
+  const avatarContent = useMemo(() => {
+    // If we have a picture from OAuth or directly, use it
+    if (picture || oauth?.picture) {
+      return <img src={picture || oauth?.picture} alt={displayName} />;
+    }
+    
+    // Otherwise generate an avatar with initials
+    const bgColor = generateAvatarColor(userPub);
+    const initials = generateInitials(displayName);
+    
+    return (
+      <div 
+        style={{ 
+          backgroundColor: bgColor,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          height: '100%',
+          color: '#ffffff',
+          fontSize: '1.5rem',
+          fontWeight: 'bold'
+        }}
+      >
+        {initials}
+      </div>
+    );
+  }, [picture, oauth?.picture, userPub, displayName]);
+
+  const toggleDetails = () => {
+    setShowDetails(!showDetails);
+  };
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'N/A';
+    return new Date(timestamp).toLocaleString();
+  };
+
   return (
-    <div className="card mb-6">
+    <div className="card bg-base-100 shadow-xl">
       <div className="card-body">
-        <h2 className="card-title text-2xl flex items-center gap-2">
-          <span className="text-2xl">👤</span> User Profile
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div className="bg-base-200 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-secondary mb-2">User ID</h3>
-            <p className="font-mono text-sm break-all">{authStatus.user.pub}</p>
+        <div className="flex items-center gap-4">
+          <div className="avatar">
+            <div className="w-16 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+              {avatarContent}
+            </div>
           </div>
-          
-          {authStatus.user.alias && (
-            <div className="bg-base-200 p-4 rounded-lg">
-              <h3 className="text-sm font-medium text-secondary mb-2">Alias</h3>
-              <p className="font-mono text-sm break-all">{authStatus.user.alias}</p>
-            </div>
-          )}
-          
-          {authStatus.user.epub && (
-            <div className="bg-base-200 p-4 rounded-lg">
-              <h3 className="text-sm font-medium text-secondary mb-2">Public Encryption Key</h3>
-              <p className="font-mono text-sm break-all">{authStatus.user.epub}</p>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-6">
-          <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
-            <span className="text-lg">🔐</span> Authentication Details
-          </h3>
-          <div className="bg-base-200 p-4 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-secondary">Authentication Status</span>
-              <span className="badge-custom success">Authenticated</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-secondary">Session Type</span>
-              <span className="badge-custom">GunDB</span>
-            </div>
+          <div>
+            <h2 className="card-title">{displayName}</h2>
+            <p className="text-sm opacity-70">{email}</p>
           </div>
         </div>
 
-        <div className="mt-6">
-          <div className="alert-custom">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-info shrink-0 w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <div>
-              <h3 className="font-bold">Security Note</h3>
-              <p className="text-sm">Your keys are stored securely in your browser. Never share your private keys with anyone.</p>
+        <div className="divider"></div>
+
+        <div className="flex justify-between items-center">
+          <button 
+            className="btn btn-sm btn-ghost"
+            onClick={toggleDetails}
+          >
+            {showDetails ? 'Hide Details' : 'Show Details'}
+          </button>
+          <button 
+            className="btn btn-sm btn-error"
+            onClick={onLogout}
+          >
+            Logout
+          </button>
+        </div>
+
+        {showDetails && (
+          <div className="mt-4 space-y-2 text-sm">
+            <div className="grid grid-cols-2 gap-2">
+              <span className="font-semibold">User ID:</span>
+              <span className="truncate">{user.userPub || 'N/A'}</span>
+            </div>
+            
+            {oauth && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <span className="font-semibold">OAuth Provider:</span>
+                  <span>{oauth.provider || 'N/A'}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <span className="font-semibold">OAuth ID:</span>
+                  <span className="truncate">{oauth.id || 'N/A'}</span>
+                </div>
+              </>
+            )}
+            
+            <div className="grid grid-cols-2 gap-2">
+              <span className="font-semibold">Created:</span>
+              <span>{formatDate(user.createdAt)}</span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <span className="font-semibold">Last Login:</span>
+              <span>{formatDate(user.lastLogin || oauth?.lastLogin)}</span>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
