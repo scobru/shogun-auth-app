@@ -261,7 +261,7 @@ function App() {
 
   useEffect(() => {
     // Set up Gun middleware for headers
-    Gun.on('opt', function (ctx) {
+    /* Gun.on('opt', function (ctx) {
       if (ctx.once) {
         return
       }
@@ -274,7 +274,7 @@ function App() {
         }
         to.next(msg) // pass to next middleware
       })
-    })
+    }) */
 
     // Create the Gun instance
     // const gunInstance = new Gun({
@@ -286,7 +286,7 @@ function App() {
     // Create ShogunCore with the Gun instance and specify scope
     const shogunCore = new ShogunCore({
       // gunInstance: gunInstance,
-      authToken: import.meta.env.VITE_GUN_TOKEN,
+      authToken: import.meta.env.VITE_GUN_TOKEN, 
       peers: relays,
       scope: "shogun", // Use scope instead of getting a chain node
       web3: { enabled: true },
