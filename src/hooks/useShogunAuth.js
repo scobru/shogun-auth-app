@@ -107,8 +107,11 @@ export const useShogunAuth = (shogun) => {
         console.log(`[${new Date().toISOString()}] Login successful: ${result.userPub}`);
         
         // Fetch user data
-        const userData = await shogun.user.get();
-        setUser({ ...userData, username: normalizedUsername, userPub: result.userPub });
+        const userData = await shogun.user
+
+        console.log("USERDATA:", userData)
+        
+        setUser({ ...userData, username: normalizedUsername, userPub: result.userPub , username: result.username });
         setIsAuthenticated(true);
         return { success: true, userPub: result.userPub, userData };
       } else {

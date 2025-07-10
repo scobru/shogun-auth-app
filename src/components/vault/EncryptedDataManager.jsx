@@ -80,7 +80,7 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
 
       
 
-      await shogun.gundb.saveUserData(
+      await shogun.gundb.putUserData(
         "shogun/encryptedData/" + dataKey,
         encryptedValue
       );
