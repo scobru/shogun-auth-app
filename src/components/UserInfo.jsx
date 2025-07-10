@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { gunAvatar } from 'gun-avatar';
 
 /**
  * Component to display user information
@@ -16,30 +17,6 @@ const UserInfo = ({ user, onLogout }) => {
   const { email, name, picture, oauth, userPub } = user;
   const displayName = name || email || 'User';
   
-  // Generate avatar color based on userPub
-  const generateAvatarColor = (pubKey) => {
-    if (!pubKey) return '#4F6BF6'; // Default color
-    
-    // Use the first 6 characters of the pubkey as a hex color
-    const hash = pubKey.slice(0, 6);
-    try {
-      return `#${hash}`;
-    } catch (e) {
-      return '#4F6BF6'; // Fallback color
-    }
-  };
-  
-  // Generate initials for avatar
-  const generateInitials = (name) => {
-    if (!name) return '?';
-    
-    const parts = name.split(/\s+/);
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-  
   // Create a generated avatar if no picture is available
   const avatarContent = useMemo(() => {
     // If we have a picture from OAuth or directly, use it
@@ -47,14 +24,32 @@ const UserInfo = ({ user, onLogout }) => {
       return <img src={picture || oauth?.picture} alt={displayName} />;
     }
     
+    // Use gun-avatar if userPub is available
+    if (userPub) {
+      try {
+        const avatarSrc = gunAvatar({ pub: userPub, size: 64 });
+        return <img src={avatarSrc} alt={displayName} />;
+      } catch (e) {
+        console.error("Error generating gun-avatar:", e);
+        // Fallback to initials if gun-avatar fails
+      }
+    }
+    
     // Otherwise generate an avatar with initials
-    const bgColor = generateAvatarColor(userPub);
+    const generateInitials = (name) => {
+      if (!name) return '?';
+      const parts = name.split(/\s+/);
+      if (parts.length >= 2) {
+        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+      }
+      return name.substring(0, 2).toUpperCase();
+    };
     const initials = generateInitials(displayName);
     
     return (
       <div 
         style={{ 
-          backgroundColor: bgColor,
+          backgroundColor: '#4F6BF6', // A default color
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -132,14 +127,10 @@ const UserInfo = ({ user, onLogout }) => {
             )}
             
             <div className="grid grid-cols-2 gap-2">
-              <span className="font-semibold">Created:</span>
-              <span>{formatDate(user.createdAt)}</span>
+              <span className="font-semibold">Username:</span>
+              <span>{user.username}</span>
             </div>
             
-            <div className="grid grid-cols-2 gap-2">
-              <span className="font-semibold">Last Login:</span>
-              <span>{formatDate(user.lastLogin || oauth?.lastLogin)}</span>
-            </div>
           </div>
         )}
       </div>

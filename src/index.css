@@ -157,9 +157,8 @@ body {
 }
 
 .badge-custom.success {
-  background-color: var(--alert-success-bg);
+  background-color: #2a53ad;
   color: var(--color-success);
-  border: 1px solid var(--color-success);
 }
 
 .badge-custom.error {
