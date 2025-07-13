@@ -51,7 +51,7 @@ const OAuthCallback = ({ shogun }) => {
             }
           }));
 
-          navigate('/', { state: { authSuccess: true } });
+          window.location.href = '/'; // Forza reload per aggiornare il context
         } else {
           throw new Error(result.error || 'Authentication failed');
         }
