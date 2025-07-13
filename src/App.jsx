@@ -17,7 +17,7 @@ import {
 import Gun from "gun"
 import "gun/sea"
 
-import { useShogunAuth } from "./hooks/useShogunAuth.js";
+// import { useShogunAuth } from "./hooks/useShogunAuth.js";
 import { ShogunCore } from "shogun-core";
 import OAuthCallback from "./components/OAuthCallback";
 import EncryptedDataManager from "./components/vault/EncryptedDataManager";
@@ -27,8 +27,10 @@ import UserInfo  from "./components/UserInfo";
 import logo from "./assets/logo.svg";
 import "./index.css"; // Import Tailwind CSS
 
-// Main component that manages the app after login
-const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
+// Main component che usa direttamente il context auth
+const MainApp = ({ shogun, gunInstance, location }) => {
+  // PRIMA DI OGNI USO: chiama useShogun
+  const { isLoggedIn, userPub, username, logout } = useShogun();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const redirectUrl = searchParams.get("redirect");
@@ -39,7 +41,7 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
 
   // Load proofs when logged in
   useEffect(() => {
-    if (authStatus.isLoggedIn) {
+    if (isLoggedIn) {
       // Show a success message if OAuth login was just completed
       if (location?.state?.authSuccess && !authSuccessShown.current) {
         authSuccessShown.current = true;
@@ -47,7 +49,7 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
         // Here you could show a toast or success alert
       }
     }
-  }, [authStatus.isLoggedIn, location, redirectUrl, navigate]);
+  }, [isLoggedIn, location, redirectUrl, navigate]);
 
   return (
     <div className="min-h-screen">
@@ -68,15 +70,15 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
         <div className="flex justify-center mb-6">
           <div
             className={`badge-custom ${
-              authStatus.isLoggedIn ? "success" : "error"
+              isLoggedIn ? "success" : "error"
             }`}
           >
-            {authStatus.isLoggedIn ? "Authenticated" : "Not authenticated"}
+            {isLoggedIn ? "Authenticated" : "Not authenticated"}
           </div>
         </div>
 
         {/* Display redirect notice if applicable */}
-        {authStatus.isLoggedIn && redirectUrl && (
+        {isLoggedIn && redirectUrl && (
           <div className="alert-custom">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -98,14 +100,14 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
         )}
 
         {/* Display user info after login */}
-        {authStatus.isLoggedIn && <UserInfo user={authStatus.user} onLogout={logout} />}
+        {isLoggedIn && <UserInfo user={{ userPub, username }} onLogout={logout} />}
 
         <div className="card mb-6 p-10">
           <div className="p-6">
             <h2 className="text-2xl font-semibold mb-6">Authentication</h2>
 
             {/* ShogunButton handles both logged-in and logged-out states, show it unless we're redirecting */}
-            {authStatus.isLoggedIn && redirectUrl ? (
+            {isLoggedIn && redirectUrl ? (
               <div className="flex justify-center">
                 <div className="text-center">
                   <div className="loading-custom mx-auto"></div>
@@ -121,28 +123,11 @@ const MainApp = ({ authStatus, logout, shogun, gunInstance, location }) => {
         </div>
 
         {/* Add Encrypted Data Manager when user is logged in (but not if redirecting) */}
-        {authStatus.isLoggedIn && !redirectUrl && (
-          <EncryptedDataManager shogun={shogun} authStatus={authStatus} />
+        {isLoggedIn && !redirectUrl && (
+          <EncryptedDataManager shogun={shogun} authStatus={{ user: { userPub, username }, isLoggedIn }} />
         )}
 
-        {authStatus.error && (
-          <div className="alert-custom error">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="stroke-current shrink-0 h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span>{authStatus.error}</span>
-          </div>
-        )}
+        {/* Se vuoi gestire errori, aggiungi qui uno stato custom o usa error di useShogun se disponibile */}
       </div>
 
       {/* Footer */}
@@ -197,35 +182,24 @@ function ShogunApp({ shogun }) {
     theme: "dark",
   };
 
-  // Fix: Pass the shogun instance directly to useShogunAuth
-  const { 
-    user, 
-    isAuthenticated, 
-    isLoading, 
-    error, 
-    login, 
-    register, 
-    logout, 
-    oauthLogin 
-  } = useShogunAuth(shogun);
+  // Usa useShogun dal context
+  const { isLoggedIn, userPub, username, login, signUp, logout, sdk } = useShogun();
 
-  // Create authStatus object from hook return values
+  // authStatus compatibile con la vecchia struttura
   const authStatus = {
-    user,
-    isLoggedIn: isAuthenticated,
-    isLoading,
-    error
+    user: { userPub, username },
+    isLoggedIn,
+    isLoading: false, // puoi aggiungere uno stato custom se serve
+    error: null // puoi aggiungere uno stato custom se serve
   };
 
-  // Define handlers using the hook's functions
+  // Handler per login/logout (se vuoi log custom)
   const handleLoginSuccess = (result) => {
     console.log("Login success:", result);
   };
-
   const handleError = (error) => {
     console.error("Auth error:", error);
   };
-
   const handleLogout = async () => {
     try {
       await logout();
@@ -259,6 +233,7 @@ function ShogunApp({ shogun }) {
         options={providerOptions}
         onLoginSuccess={handleLoginSuccess}
         onSignupSuccess={handleLoginSuccess}
+        onLogout={handleLogout}
         onError={handleError}
       >
         <Routes>
@@ -270,8 +245,6 @@ function ShogunApp({ shogun }) {
             path="/"
             element={
               <MainAppWithLocation
-                authStatus={authStatus}
-                logout={handleLogout}
                 shogun={shogun}
                 gunInstance={shogun?.gundb?.gun}
               />
@@ -320,6 +293,7 @@ function App() {
     // Create ShogunCore with the Gun instance and specify scope
     const shogunCore = new ShogunCore({
       // gunInstance: gunInstance,
+      appToken: import.meta.env.VITE_APP_TOKEN,
       authToken: import.meta.env.VITE_GUN_TOKEN, 
       peers: relays,
       scope: "shogun", // Use scope instead of getting a chain node
