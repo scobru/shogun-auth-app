@@ -34,6 +34,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "daisyui": "^5.0.43",
+    "dotenv": "^17.2.0",
     "gun": "^0.2020.1240",
     "gun-avatar": "^2.2.4",
     "react": "^18.2.0",

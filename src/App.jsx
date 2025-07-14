@@ -14,8 +14,8 @@ import {
   useShogun,
 } from "shogun-button-react";
 
-import Gun from "gun"
-import "gun/sea"
+// import Gun from "gun"
+// import "gun/sea"
 
 // import { useShogunAuth } from "./hooks/useShogunAuth.js";
 import { ShogunCore } from "shogun-core";
@@ -23,7 +23,7 @@ import OAuthCallback from "./components/OAuthCallback";
 import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import { truncate } from "./utils/string.js";
-import UserInfo  from "./components/UserInfo";
+import UserInfo from "./components/UserInfo";
 import logo from "./assets/logo.svg";
 import "./index.css"; // Import Tailwind CSS
 
@@ -59,20 +59,14 @@ const MainApp = ({ shogun, gunInstance, location }) => {
             <img src={logo} alt="Shogun Auth" className="w-20 h-20" />
             auth
           </h1>
-          <p className="text-secondary">
-            Secure, decentralized authentication
-          </p>
+          <p className="text-secondary">Secure, decentralized authentication</p>
           <ThemeToggle />
         </div>
       </header>
 
       <div className="container">
         <div className="flex justify-center mb-6">
-          <div
-            className={`badge-custom ${
-              isLoggedIn ? "success" : "error"
-            }`}
-          >
+          <div className={`badge-custom ${isLoggedIn ? "success" : "error"}`}>
             {isLoggedIn ? "Authenticated" : "Not authenticated"}
           </div>
         </div>
@@ -94,13 +88,16 @@ const MainApp = ({ shogun, gunInstance, location }) => {
               ></path>
             </svg>
             <span className="text-[#4F6BF6]">
-              Authentication successful! Redirecting you back to the application...
+              Authentication successful! Redirecting you back to the
+              application...
             </span>
           </div>
         )}
 
         {/* Display user info after login */}
-        {isLoggedIn && <UserInfo user={{ userPub, username }} onLogout={logout} />}
+        {isLoggedIn && (
+          <UserInfo user={{ userPub, username }} onLogout={logout} />
+        )}
 
         <div className="card mb-6 p-10">
           <div className="p-6">
@@ -124,7 +121,10 @@ const MainApp = ({ shogun, gunInstance, location }) => {
 
         {/* Add Encrypted Data Manager when user is logged in (but not if redirecting) */}
         {isLoggedIn && !redirectUrl && (
-          <EncryptedDataManager shogun={shogun} authStatus={{ user: { userPub, username }, isLoggedIn }} />
+          <EncryptedDataManager
+            shogun={shogun}
+            authStatus={{ user: { userPub, username }, isLoggedIn }}
+          />
         )}
 
         {/* Se vuoi gestire errori, aggiungi qui uno stato custom o usa error di useShogun se disponibile */}
@@ -133,29 +133,31 @@ const MainApp = ({ shogun, gunInstance, location }) => {
       {/* Footer */}
       <footer className="mt-12 py-8 border-t border-border-color bg-base-200/50">
         <div className="container mx-auto text-center">
-          
-        <p className="text-gray-400 mb-4">
-        <a
-            href="https://github.com/scobru/shogun-auth-app"
-            className="text-blue-500 hover:text-blue-400"
-            >repo</a
-          >
-          {" - "}
-          build with ❤️ by {""}
-          <a
-            href="https://github.com/scobru"
-            className="text-blue-500 hover:text-blue-400"
-            >scobru</a
-          >
-        </p>
-        <p className="text-gray-400 mb-4">
-          part of {""}
-          <a
-            href="https://shogun-info.vercel.app"
-            className="text-blue-500 hover:text-blue-400"
-            >shogun project</a
-          >
-        </p>
+          <p className="text-gray-400 mb-4">
+            <a
+              href="https://github.com/scobru/shogun-auth-app"
+              className="text-blue-500 hover:text-blue-400"
+            >
+              repo
+            </a>
+            {" - "}
+            build with ❤️ by {""}
+            <a
+              href="https://github.com/scobru"
+              className="text-blue-500 hover:text-blue-400"
+            >
+              scobru
+            </a>
+          </p>
+          <p className="text-gray-400 mb-4">
+            part of {""}
+            <a
+              href="https://shogun-info.vercel.app"
+              className="text-blue-500 hover:text-blue-400"
+            >
+              shogun project
+            </a>
+          </p>
         </div>
       </footer>
     </div>
@@ -183,14 +185,15 @@ function ShogunApp({ shogun }) {
   };
 
   // Usa useShogun dal context
-  const { isLoggedIn, userPub, username, login, signUp, logout, sdk } = useShogun();
+  const { isLoggedIn, userPub, username, login, signUp, logout, sdk } =
+    useShogun();
 
   // authStatus compatibile con la vecchia struttura
   const authStatus = {
     user: { userPub, username },
     isLoggedIn,
     isLoading: false, // puoi aggiungere uno stato custom se serve
-    error: null // puoi aggiungere uno stato custom se serve
+    error: null, // puoi aggiungere uno stato custom se serve
   };
 
   // Handler per login/logout (se vuoi log custom)
@@ -211,7 +214,7 @@ function ShogunApp({ shogun }) {
   const providerOptions = {
     appName: appOptions.appName,
     theme: appOptions.theme,
-    showOauth: true,
+    showOauth: false,
     showWebauthn: true,
     showMetamask: true,
     showNostr: true,
@@ -294,7 +297,7 @@ function App() {
     const shogunCore = new ShogunCore({
       // gunInstance: gunInstance,
       appToken: import.meta.env.VITE_APP_TOKEN,
-      authToken: import.meta.env.VITE_GUN_TOKEN, 
+      authToken: import.meta.env.VITE_GUN_TOKEN,
       peers: relays,
       scope: "shogun", // Use scope instead of getting a chain node
       web3: { enabled: true },
@@ -304,12 +307,13 @@ function App() {
       },
       nostr: { enabled: true },
       oauth: {
-        enabled: true,
+        enabled: false,
         usePKCE: true,
+        allowUnsafeClientSecret: true,
         providers: {
           google: {
-            clientId:
-              import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            enabled: true,
+            clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
             clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
             redirectUri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
             scope: ["openid", "email", "profile"],
@@ -326,7 +330,7 @@ function App() {
       window.shogunDebug = {
         clearAllData: () => shogunCore.clearAllStorageData(),
         sdk: shogunCore,
-        gun: shogunCore.gun
+        gun: shogunCore.gun,
       };
       console.log("Debug methods available at window.shogunDebug");
       console.log("Available debug methods:", Object.keys(window.shogunDebug));
