@@ -14,21 +14,16 @@ import {
   useShogun,
 } from "shogun-button-react";
 
-// import Gun from "gun"
-// import "gun/sea"
-
-// import { useShogunAuth } from "./hooks/useShogunAuth.js";
 import { ShogunCore } from "shogun-core";
 import OAuthCallback from "./components/OAuthCallback";
 import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
-import { truncate } from "./utils/string.js";
 import UserInfo from "./components/UserInfo";
 import logo from "./assets/logo.svg";
 import "./index.css"; // Import Tailwind CSS
 
 // Main component che usa direttamente il context auth
-const MainApp = ({ shogun, gunInstance, location }) => {
+const MainApp = ({ location }) => {
   // PRIMA DI OGNI USO: chiama useShogun
   const { isLoggedIn, userPub, username, logout } = useShogun();
   const [searchParams] = useSearchParams();
@@ -122,7 +117,6 @@ const MainApp = ({ shogun, gunInstance, location }) => {
         {/* Add Encrypted Data Manager when user is logged in (but not if redirecting) */}
         {isLoggedIn && !redirectUrl && (
           <EncryptedDataManager
-            shogun={shogun}
             authStatus={{ user: { userPub, username }, isLoggedIn }}
           />
         )}
@@ -214,20 +208,11 @@ function ShogunApp({ shogun }) {
   const providerOptions = {
     appName: appOptions.appName,
     theme: appOptions.theme,
-    showOauth: false,
+    showOauth: true,
     showWebauthn: true,
     showMetamask: true,
     showNostr: true,
   };
-
-  // Debug provider options
-  console.log("ShogunButtonProvider options:", providerOptions);
-  console.log("Shogun SDK plugins:", {
-    web3: shogun?.hasPlugin("web3"),
-    webauthn: shogun?.hasPlugin("webauthn"),
-    oauth: shogun?.hasPlugin("oauth"),
-    nostr: shogun?.hasPlugin("nostr"),
-  });
 
   return (
     <Router>
@@ -240,19 +225,8 @@ function ShogunApp({ shogun }) {
         onError={handleError}
       >
         <Routes>
-          <Route
-            path="/auth/callback"
-            element={<OAuthCallback shogun={shogun} />}
-          />
-          <Route
-            path="/"
-            element={
-              <MainAppWithLocation
-                shogun={shogun}
-                gunInstance={shogun?.gundb?.gun}
-              />
-            }
-          />
+          <Route path="/auth/callback" element={<OAuthCallback />} />
+          <Route path="/" element={<MainAppWithLocation />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ShogunButtonProvider>
@@ -262,6 +236,7 @@ function ShogunApp({ shogun }) {
 
 function App() {
   const [sdk, setSdk] = useState(null);
+  const [error, setError] = useState(null);
 
   const relays = [
     "wss://ruling-mastodon-improved.ngrok-free.app/gun",
@@ -270,74 +245,124 @@ function App() {
   ];
 
   useEffect(() => {
-    // Set up Gun middleware for headers
-    /* Gun.on('opt', function (ctx) {
-      if (ctx.once) {
-        return
-      }
-      ctx.on('out', function (msg) {
-        var to = this.to
-        // Adds headers for put
-        msg.headers = {
-          token: import.meta.env.VITE_GUN_TOKEN,
-          Authorization: 'Bearer ' + import.meta.env.VITE_GUN_TOKEN
+    try {
+      // Set up Gun middleware for headers
+      /* Gun.on('opt', function (ctx) {
+        if (ctx.once) {
+          return
         }
-        to.next(msg) // pass to next middleware
-      })
-    }) */
+        ctx.on('out', function (msg) {
+          var to = this.to
+          // Adds headers for put
+          msg.headers = {
+            token: import.meta.env.VITE_GUN_TOKEN,
+            Authorization: 'Bearer ' + import.meta.env.VITE_GUN_TOKEN
+          }
+          to.next(msg) // pass to next middleware
+        })
+      }) */
 
-    // Create the Gun instance
-    // const gunInstance = new Gun({
-    //   peers: relays,
-    //   localStorage: false,
-    //   radisk: false,
-    // });
+      // Create the Gun instance
+      // const gunInstance = new Gun({
+      //   peers: relays,
+      //   localStorage: false,
+      //   radisk: false,
+      // });
 
-    // Create ShogunCore with the Gun instance and specify scope
-    const shogunCore = new ShogunCore({
-      // gunInstance: gunInstance,
-      appToken: import.meta.env.VITE_APP_TOKEN,
-      authToken: import.meta.env.VITE_GUN_TOKEN,
-      peers: relays,
-      scope: "shogun", // Use scope instead of getting a chain node
-      web3: { enabled: true },
-      webauthn: {
-        enabled: true,
-        rpName: "Shogun Auth App",
-      },
-      nostr: { enabled: true },
-      oauth: {
-        enabled: false,
-        usePKCE: true,
-        allowUnsafeClientSecret: true,
-        providers: {
-          google: {
-            enabled: true,
-            clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
-            redirectUri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
-            scope: ["openid", "email", "profile"],
-            authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
-            tokenUrl: "https://oauth2.googleapis.com/token",
-            userInfoUrl: "https://www.googleapis.com/oauth2/v2/userinfo",
+      let redirectUri;
+
+      // se localhost usa http://localhost:8080/auth/callback
+      if (window.location.hostname === "localhost") {
+        redirectUri = "http://localhost:8080/auth/callback";
+      } else {
+        redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+      }
+
+      // Create ShogunCore with the Gun instance and specify scope
+      const shogunCore = new ShogunCore({
+        // gunInstance: gunInstance,
+        appToken: import.meta.env.VITE_APP_TOKEN,
+        authToken: import.meta.env.VITE_GUN_TOKEN,
+        peers: [], // Disabilita i peer per evitare problemi di connessione
+        scope: "shogun", // Use scope instead of getting a chain node
+        web3: { enabled: true }, // Disabilita web3
+        webauthn: {
+          enabled: true, // Disabilita webauthn
+          rpName: "Shogun Auth App",
+        },
+        nostr: { enabled: true }, // Disabilita nostr
+        oauth: {
+          enabled: true,
+          usePKCE: true, // PKCE obbligatorio per sicurezza
+          allowUnsafeClientSecret: true, // Abilitato per Google OAuth
+          stateTimeout: 10 * 60 * 1000, // 10 minuti timeout
+          providers: {
+            google: {
+              enabled: true,
+              clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+              // Google OAuth richiede client_secret anche con PKCE
+              // Questo è sicuro perché:
+              // 1. PKCE fornisce protezione contro code interception
+              // 2. Il client_secret è pubblico per web apps
+              // 3. La sicurezza è garantita dal redirect URI autorizzato
+              clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+              redirectUri: redirectUri,
+              scope: ["openid", "email", "profile"],
+              authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+              tokenUrl: "https://oauth2.googleapis.com/token",
+              userInfoUrl: "https://www.googleapis.com/oauth2/v2/userinfo",
+              usePKCE: true, // Forza PKCE per Google
+            },
           },
         },
-      },
-    });
+        // Aggiungi configurazione per evitare problemi di inizializzazione
+        gun: {
+          enabled: false, // Disabilita completamente GunDB
+          localStorage: false, // Disabilita localStorage per evitare conflitti
+          radisk: false, // Disabilita radisk
+          axe: false, // Disabilita axe per semplificare
+        },
+      });
 
-    // Add debug methods to window for testing
-    if (typeof window !== "undefined") {
-      window.shogunDebug = {
-        clearAllData: () => shogunCore.clearAllStorageData(),
-        sdk: shogunCore,
-        gun: shogunCore.gun,
-      };
-      console.log("Debug methods available at window.shogunDebug");
-      console.log("Available debug methods:", Object.keys(window.shogunDebug));
+      // Add debug methods to window for testing
+      if (typeof window !== "undefined") {
+        window.shogunDebug = {
+          clearAllData: () => shogunCore.clearAllStorageData(),
+          sdk: shogunCore,
+          gun: shogunCore.gun,
+        };
+        console.log("Debug methods available at window.shogunDebug");
+        console.log(
+          "Available debug methods:",
+          Object.keys(window.shogunDebug)
+        );
+      }
+
+      setSdk(shogunCore);
+    } catch (err) {
+      console.error("Error initializing ShogunCore:", err);
+      setError(err.message);
     }
-
-    setSdk(shogunCore);
   }, []); // Empty dependency array to run only once
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-error mb-4">
+            Initialization Error
+          </h2>
+          <p className="text-base-content/80 mb-4">{error}</p>
+          <button
+            className="btn btn-primary"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!sdk) {
     return (

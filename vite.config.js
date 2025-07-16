@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import tailwindcss from '@tailwindcss/vite';
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   // Base configuration
@@ -26,10 +26,10 @@ export default defineConfig({
     historyApiFallback: {
       disableDotRule: true,
       rewrites: [
-        { from: /^\/auth\/callback/, to: '/index.html' },
-        { from: /./, to: '/index.html' }
-      ]
-    }
+        { from: /^\/auth\/callback/, to: "/index.html" },
+        { from: /./, to: "/index.html" },
+      ],
+    },
   },
 
   // Preview server (for built files)

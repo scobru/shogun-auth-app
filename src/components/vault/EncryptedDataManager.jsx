@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useShogun } from "shogun-button-react";
 
 // Encrypted Data Manager component
-const EncryptedDataManager = ({ shogun, authStatus }) => {
+const EncryptedDataManager = ({ authStatus }) => {
+  const { sdk } = useShogun();
   const [dataKey, setDataKey] = useState("");
   const [dataValue, setDataValue] = useState("");
   const [storedData, setStoredData] = useState({});
@@ -12,10 +14,10 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
 
   // Load user's encrypted data when logged in
   useEffect(() => {
-    if (authStatus.isLoggedIn && shogun) {
+    if (authStatus.isLoggedIn && sdk) {
       loadEncryptedData();
     }
-  }, [authStatus.isLoggedIn, shogun]);
+  }, [authStatus.isLoggedIn, sdk]);
 
   // Load user data from Gun
   const loadEncryptedData = async () => {
@@ -32,7 +34,7 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
       await new Promise(async (resolve) => {
         const data = {};
 
-        const userData = await shogun.gundb.getUserData("shogun/encryptedData");
+        const userData = await sdk.gundb.getUserData("shogun/encryptedData");
 
         // Handle userData as an object rather than an array
         if (userData) {
@@ -70,21 +72,18 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
     setError("");
 
     try {
-      const user = shogun.gun.user();
+      const user = sdk.gun.user();
 
       // Encrypt data using SEA
-      const encryptedValue = await shogun.gundb.encrypt(
+      const encryptedValue = await sdk.gundb.encrypt(
         dataValue,
-        shogun.user.pair()
+        sdk.user.pair()
       );
 
-      
-
-      await shogun.gundb.putUserData(
+      await sdk.gundb.putUserData(
         "shogun/encryptedData/" + dataKey,
         encryptedValue
       );
-
 
       // Save to user's space
       /* await new Promise((resolve, reject) => {
@@ -124,9 +123,9 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
   const handleDecrypt = async (key) => {
     try {
       const encryptedValue = storedData[key];
-      const decrypted = await shogun.gundb.decrypt(
+      const decrypted = await sdk.gundb.decrypt(
         encryptedValue,
-        shogun.user.pair()
+        sdk.user.pair()
       );
 
       setDecryptedData((prev) => ({
@@ -145,7 +144,7 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
       setLoading(true);
       setError(null);
 
-      const user = shogun.gun.user();
+      const user = sdk.gun.user();
 
       // Delete from Gun (set to null)
       await new Promise((resolve, reject) => {
