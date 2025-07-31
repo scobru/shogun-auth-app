@@ -9,7 +9,7 @@ const OAuthCallback = () => {
   const processing = useRef(false);
 
   // Usa il context invece di gestire direttamente l'autenticazione
-  const { login, sdk } = useShogun();
+  const { sdk } = useShogun();
 
   // Memoizza la funzione handleAuth per evitare re-esecuzioni
   const handleAuth = useCallback(async () => {
@@ -37,6 +37,14 @@ const OAuthCallback = () => {
       const error = params.get("error");
       const errorDescription = params.get("error_description");
 
+      console.log("OAuth callback parameters:", {
+        code: code ? "present" : "missing",
+        state: state ? "present" : "missing",
+        error,
+        errorDescription,
+        fullUrl: location.search
+      });
+
       // Controlla se c'è un errore OAuth
       if (error) {
         throw new Error(
@@ -61,8 +69,8 @@ const OAuthCallback = () => {
         `[${new Date().toISOString()}] Handling OAuth callback for ${provider}`
       );
 
-      // Usa il metodo login del context invece di chiamare direttamente il plugin
-      const result = await login("oauth", provider, code, state);
+      // Usa direttamente il plugin OAuth invece del context
+      const result = await oauthPlugin.handleOAuthCallback(provider, code, state);
 
       if (result && result.success) {
         console.log(
@@ -70,8 +78,15 @@ const OAuthCallback = () => {
           result
         );
 
-        // L'evento shogun:auth:updated viene già emesso dal context
-        // Non serve più emetterlo manualmente qui
+        // Emetti l'evento di aggiornamento auth
+        if (sdk.emit) {
+          sdk.emit("auth:updated", {
+            userPub: result.userPub,
+            username: result.user?.username,
+            method: "oauth",
+            provider,
+          });
+        }
 
         navigate("/", { state: { authSuccess: true } });
       } else {
@@ -95,8 +110,10 @@ const OAuthCallback = () => {
       } else {
         setError(e.message || "An unexpected error occurred.");
       }
+    } finally {
+      processing.current = false;
     }
-  }, [sdk, login, navigate, location]);
+  }, [sdk, navigate, location]);
 
   useEffect(() => {
     handleAuth();

@@ -98,6 +98,16 @@ const MainApp = ({ location }) => {
           <div className="p-6">
             <h2 className="text-2xl font-semibold mb-6">Authentication</h2>
 
+            {/* Mostra messaggio se OAuth non è configurato */}
+            {!import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+              <div className="alert alert-info mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Google OAuth is not configured. Only password, WebAuthn, Web3, and Nostr authentication methods are available.</span>
+              </div>
+            )}
+
             {/* ShogunButton handles both logged-in and logged-out states, show it unless we're redirecting */}
             {isLoggedIn && redirectUrl ? (
               <div className="flex justify-center">
@@ -169,7 +179,8 @@ function ShogunApp({ shogun }) {
     appName: "Shogun Auth App",
     shogun,
     authMethods: [
-      { type: "oauth", provider: "google" },
+      // Includi OAuth solo se è abilitato
+      ...(import.meta.env.VITE_GOOGLE_CLIENT_ID ? [{ type: "oauth", provider: "google" }] : []),
       { type: "password" },
       { type: "webauthn" },
       { type: "web3" },
@@ -208,7 +219,7 @@ function ShogunApp({ shogun }) {
   const providerOptions = {
     appName: appOptions.appName,
     theme: appOptions.theme,
-    showOauth: true,
+    showOauth: !!import.meta.env.VITE_GOOGLE_CLIENT_ID, // Mostra OAuth solo se configurato
     showWebauthn: true,
     showMetamask: true,
     showNostr: true,
@@ -278,65 +289,56 @@ function App() {
         redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
       }
 
+      // Verifica che il clientId sia presente
+      if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+        console.error("❌ VITE_GOOGLE_CLIENT_ID is not set!");
+        throw new Error("Google OAuth client ID is not configured. Please check your .env file.");
+      }
+
+      // Determina se OAuth deve essere abilitato
+      const isOAuthEnabled = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
       // Create ShogunCore with the Gun instance and specify scope
       const shogunCore = new ShogunCore({
-        // gunInstance: gunInstance,
-        appToken: import.meta.env.VITE_APP_TOKEN,
         authToken: import.meta.env.VITE_GUN_TOKEN,
-        peers: [], // Disabilita i peer per evitare problemi di connessione
-        scope: "shogun", // Use scope instead of getting a chain node
-        web3: { enabled: true }, // Disabilita web3
+        peers: [
+          "https://gun-manhattan.herokuapp.com/gun",
+          "https://peer.wallie.io/gun",
+          "wss://ruling-mastodon-improved.ngrok-free.app/gun",
+        ],
+        scope: "shogun",
+        web3: { enabled: true },
         webauthn: {
-          enabled: true, // Disabilita webauthn
+          enabled: true,
           rpName: "Shogun Auth App",
         },
-        nostr: { enabled: true }, // Disabilita nostr
+        nostr: { enabled: true },
         oauth: {
-          enabled: true,
-          usePKCE: true, // PKCE obbligatorio per sicurezza
-          allowUnsafeClientSecret: true, // Abilitato per Google OAuth
-          stateTimeout: 10 * 60 * 1000, // 10 minuti timeout
-          providers: {
+          enabled: isOAuthEnabled,
+          usePKCE: true,
+          allowUnsafeClientSecret: true,
+          stateTimeout: 10 * 60 * 1000,
+          providers: isOAuthEnabled ? {
             google: {
               enabled: true,
               clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-              // Google OAuth richiede client_secret anche con PKCE
-              // Questo è sicuro perché:
-              // 1. PKCE fornisce protezione contro code interception
-              // 2. Il client_secret è pubblico per web apps
-              // 3. La sicurezza è garantita dal redirect URI autorizzato
               clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
               redirectUri: redirectUri,
               scope: ["openid", "email", "profile"],
               authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
               tokenUrl: "https://oauth2.googleapis.com/token",
               userInfoUrl: "https://www.googleapis.com/oauth2/v2/userinfo",
-              usePKCE: true, // Forza PKCE per Google
+              usePKCE: true,
             },
-          },
+          } : {},
         },
-        // Aggiungi configurazione per evitare problemi di inizializzazione
         gun: {
-          enabled: false, // Disabilita completamente GunDB
-          localStorage: false, // Disabilita localStorage per evitare conflitti
-          radisk: false, // Disabilita radisk
-          axe: false, // Disabilita axe per semplificare
+          enabled: false,
+          localStorage: false,
+          radisk: false,
+          axe: false,
         },
       });
-
-      // Add debug methods to window for testing
-      if (typeof window !== "undefined") {
-        window.shogunDebug = {
-          clearAllData: () => shogunCore.clearAllStorageData(),
-          sdk: shogunCore,
-          gun: shogunCore.gun,
-        };
-        console.log("Debug methods available at window.shogunDebug");
-        console.log(
-          "Available debug methods:",
-          Object.keys(window.shogunDebug)
-        );
-      }
 
       setSdk(shogunCore);
     } catch (err) {

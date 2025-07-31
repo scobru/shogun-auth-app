@@ -34,7 +34,7 @@ const EncryptedDataManager = ({ authStatus }) => {
       await new Promise(async (resolve) => {
         const data = {};
 
-        const userData = await sdk.gundb.getUserData("shogun/encryptedData");
+        const userData = await sdk.db.getUserData("shogun/encryptedData");
 
         // Handle userData as an object rather than an array
         if (userData) {
@@ -75,12 +75,12 @@ const EncryptedDataManager = ({ authStatus }) => {
       const user = sdk.gun.user();
 
       // Encrypt data using SEA
-      const encryptedValue = await sdk.gundb.encrypt(
+      const encryptedValue = await sdk.db.encrypt(
         dataValue,
-        sdk.user.pair()
+        sdk.user._.sea
       );
 
-      await sdk.gundb.putUserData(
+      await sdk.db.putUserData(
         "shogun/encryptedData/" + dataKey,
         encryptedValue
       );
@@ -123,9 +123,9 @@ const EncryptedDataManager = ({ authStatus }) => {
   const handleDecrypt = async (key) => {
     try {
       const encryptedValue = storedData[key];
-      const decrypted = await sdk.gundb.decrypt(
+      const decrypted = await sdk.db.decrypt(
         encryptedValue,
-        sdk.user.pair()
+        sdk.user._.sea
       );
 
       setDecryptedData((prev) => ({
