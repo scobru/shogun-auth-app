@@ -19,6 +19,8 @@ import OAuthCallback from "./components/OAuthCallback";
 import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import UserInfo from "./components/UserInfo";
+import LandingPage from "./components/LandingPage";
+import AuthPage from "./components/AuthPage";
 import logo from "./assets/logo.svg";
 import "./index.css"; // Import Tailwind CSS
 
@@ -29,6 +31,7 @@ const MainApp = ({ location }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const redirectUrl = searchParams.get("redirect");
+  const [showAuth, setShowAuth] = useState(false);
 
   // Reference to track if a success message has been shown
   const authSuccessShown = useRef(false);
@@ -46,6 +49,17 @@ const MainApp = ({ location }) => {
     }
   }, [isLoggedIn, location, redirectUrl, navigate]);
 
+  // If user is not logged in and not showing auth page, show landing page
+  if (!isLoggedIn && !showAuth) {
+    return <LandingPage onShowAuth={() => setShowAuth(true)} />;
+  }
+
+  // If user is not logged in but showing auth page
+  if (!isLoggedIn && showAuth) {
+    return <AuthPage onBackToLanding={() => setShowAuth(false)} />;
+  }
+
+  // User is logged in - show the original app UI
   return (
     <div className="min-h-screen">
       <header className="navbar-custom">
@@ -94,36 +108,6 @@ const MainApp = ({ location }) => {
           <UserInfo user={{ userPub, username }} onLogout={logout} />
         )}
 
-        <div className="card mb-6 p-10">
-          <div className="p-6">
-            <h2 className="text-2xl font-semibold mb-6">Authentication</h2>
-
-            {/* Mostra messaggio se OAuth non è configurato */}
-            {!import.meta.env.VITE_GOOGLE_CLIENT_ID && (
-              <div className="alert alert-info mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span>Google OAuth is not configured. Only password, WebAuthn, Web3, and Nostr authentication methods are available.</span>
-              </div>
-            )}
-
-            {/* ShogunButton handles both logged-in and logged-out states, show it unless we're redirecting */}
-            {isLoggedIn && redirectUrl ? (
-              <div className="flex justify-center">
-                <div className="text-center">
-                  <div className="loading-custom mx-auto"></div>
-                  <p className="mt-2 text-secondary">Preparing redirect...</p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex justify-center">
-                <ShogunButton />
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Add Encrypted Data Manager when user is logged in (but not if redirecting) */}
         {isLoggedIn && !redirectUrl && (
           <EncryptedDataManager
@@ -153,228 +137,109 @@ const MainApp = ({ location }) => {
               scobru
             </a>
           </p>
-          <p className="text-gray-400 mb-4">
-            part of {""}
-            <a
-              href="https://shogun-info.vercel.app"
-              className="text-blue-500 hover:text-blue-400"
-            >
-              shogun project
-            </a>
-          </p>
+          <div className="text-xs text-gray-500">
+            <p>Shogun Auth - Decentralized Authentication System</p>
+            <p>
+              This application showcases various authentication methods including
+              WebAuthn, Web3, Nostr, and OAuth.
+            </p>
+            <p className="mt-2">
+              <strong>Security Notice:</strong> All authentication is handled
+              client-side with end-to-end encryption.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
   );
 };
 
-// Wrapper for the MainApp that provides access to useLocation
-const MainAppWithLocation = (props) => {
+// Component that handles OAuth callback and redirects
+const OAuthCallbackHandler = () => {
   const location = useLocation();
-  return <MainApp {...props} location={location} />;
-};
-
-function ShogunApp({ shogun }) {
-  const appOptions = {
-    appName: "Shogun Auth App",
-    shogun,
-    authMethods: [
-      // Includi OAuth solo se è abilitato
-      ...(import.meta.env.VITE_GOOGLE_CLIENT_ID ? [{ type: "oauth", provider: "google" }] : []),
-      { type: "password" },
-      { type: "webauthn" },
-      { type: "web3" },
-      { type: "nostr" },
-    ],
-    theme: "dark",
-  };
-
-  // Usa useShogun dal context
-  const { isLoggedIn, userPub, username, login, signUp, logout, sdk } =
-    useShogun();
-
-  // authStatus compatibile con la vecchia struttura
-  const authStatus = {
-    user: { userPub, username },
-    isLoggedIn,
-    isLoading: false, // puoi aggiungere uno stato custom se serve
-    error: null, // puoi aggiungere uno stato custom se serve
-  };
-
-  // Handler per login/logout (se vuoi log custom)
-  const handleLoginSuccess = (result) => {
-    console.log("Login success:", result);
-  };
-  const handleError = (error) => {
-    console.error("Auth error:", error);
-  };
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (err) {
-      console.error("Logout error:", err);
-    }
-  };
-
-  const providerOptions = {
-    appName: appOptions.appName,
-    theme: appOptions.theme,
-    showOauth: !!import.meta.env.VITE_GOOGLE_CLIENT_ID, // Mostra OAuth solo se configurato
-    showWebauthn: true,
-    showMetamask: true,
-    showNostr: true,
-  };
-
-  return (
-    <Router>
-      <ShogunButtonProvider
-        sdk={shogun}
-        options={providerOptions}
-        onLoginSuccess={handleLoginSuccess}
-        onSignupSuccess={handleLoginSuccess}
-        onLogout={handleLogout}
-        onError={handleError}
-      >
-        <Routes>
-          <Route path="/auth/callback" element={<OAuthCallback />} />
-          <Route path="/" element={<MainAppWithLocation />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </ShogunButtonProvider>
-    </Router>
-  );
-}
-
-function App() {
-  const [sdk, setSdk] = useState(null);
-  const [error, setError] = useState(null);
-
-  const relays = [
-    "wss://ruling-mastodon-improved.ngrok-free.app/gun",
-    "https://gun-manhattan.herokuapp.com/gun",
-    "https://peer.wallie.io/gun",
-  ];
+  const navigate = useNavigate();
 
   useEffect(() => {
-    try {
-      // Set up Gun middleware for headers
-      /* Gun.on('opt', function (ctx) {
-        if (ctx.once) {
-          return
-        }
-        ctx.on('out', function (msg) {
-          var to = this.to
-          // Adds headers for put
-          msg.headers = {
-            token: import.meta.env.VITE_GUN_TOKEN,
-            Authorization: 'Bearer ' + import.meta.env.VITE_GUN_TOKEN
-          }
-          to.next(msg) // pass to next middleware
-        })
-      }) */
+    const timer = setTimeout(() => {
+      navigate("/", { state: { authSuccess: true } });
+    }, 2000);
 
-      // Create the Gun instance
-      // const gunInstance = new Gun({
-      //   peers: relays,
-      //   localStorage: false,
-      //   radisk: false,
-      // });
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
-      let redirectUri;
+  return <OAuthCallback />;
+};
 
-      // se localhost usa http://localhost:8080/auth/callback
-      if (window.location.hostname === "localhost") {
-        redirectUri = "http://localhost:8080/auth/callback";
-      } else {
-        redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+function App() {
+  const [shogunInstance, setShogunInstance] = useState(null);
+
+  useEffect(() => {
+    const initializeShogun = async () => {
+      try {
+        // Initialize ShogunCore with all plugins
+        const shogun = new ShogunCore({
+          authToken: "francos88",
+          peers: ["wss://ruling-mastodon-improved.ngrok-free.app/gun"],
+          webauthn: { enabled: true },
+          web3: { enabled: true },
+          nostr: { enabled: true },
+        });
+
+        console.log("ShogunCore initialized successfully");
+        setShogunInstance(shogun);
+      } catch (error) {
+        console.error("Failed to initialize ShogunCore:", error);
       }
+    };
 
-      // Verifica che il clientId sia presente
-      if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-        console.error("❌ VITE_GOOGLE_CLIENT_ID is not set!");
-        throw new Error("Google OAuth client ID is not configured. Please check your .env file.");
-      }
+    initializeShogun();
+  }, []);
 
-      // Determina se OAuth deve essere abilitato
-      const isOAuthEnabled = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
-
-      // Create ShogunCore with the Gun instance and specify scope
-      const shogunCore = new ShogunCore({
-        authToken: import.meta.env.VITE_GUN_TOKEN,
-        peers: [
-          "https://gun-manhattan.herokuapp.com/gun",
-          "https://peer.wallie.io/gun",
-          "wss://ruling-mastodon-improved.ngrok-free.app/gun",
-        ],
-        scope: "shogun",
-        web3: { enabled: true },
-        webauthn: {
-          enabled: true,
-          rpName: "Shogun Auth App",
-        },
-        nostr: { enabled: true },
-        oauth: {
-          enabled: isOAuthEnabled,
-          usePKCE: true,
-          allowUnsafeClientSecret: true,
-          stateTimeout: 10 * 60 * 1000,
-          providers: isOAuthEnabled ? {
-            google: {
-              enabled: true,
-              clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-              clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
-              redirectUri: redirectUri,
-              scope: ["openid", "email", "profile"],
-              authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
-              tokenUrl: "https://oauth2.googleapis.com/token",
-              userInfoUrl: "https://www.googleapis.com/oauth2/v2/userinfo",
-              usePKCE: true,
-            },
-          } : {},
-        },
-        gun: {
-          enabled: false,
-          localStorage: false,
-          radisk: false,
-          axe: false,
-        },
-      });
-
-      setSdk(shogunCore);
-    } catch (err) {
-      console.error("Error initializing ShogunCore:", err);
-      setError(err.message);
-    }
-  }, []); // Empty dependency array to run only once
-
-  if (error) {
+  if (!shogunInstance) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-error mb-4">
-            Initialization Error
-          </h2>
-          <p className="text-base-content/80 mb-4">{error}</p>
-          <button
-            className="btn btn-primary"
-            onClick={() => window.location.reload()}
-          >
-            Retry
-          </button>
+          <div className="loading-custom mx-auto mb-4"></div>
+          <p>Initializing Shogun Core...</p>
         </div>
       </div>
     );
   }
 
-  if (!sdk) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <span className="loading loading-lg"></span>
-      </div>
-    );
-  }
-
-  return <ShogunApp shogun={sdk} />;
+  return (
+    <ShogunButtonProvider
+      sdk={shogunInstance}
+      options={{
+        appName: "Shogun Auth App",
+        darkMode: false,
+        showMetamask: true,
+        showWebauthn: true,
+        showNostr: true,
+        showOauth: !!import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        peers: ["wss://ruling-mastodon-improved.ngrok-free.app/gun"],
+        webauthn: { enabled: true },
+        web3: { enabled: true },
+        nostr: { enabled: true },
+        oauth: {
+          google: {
+            enabled: !!import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            redirectUri: `${window.location.origin}/auth/callback`,
+          },
+        },
+      }}
+    >
+      <Router>
+        <Routes>
+          <Route path="/auth/callback" element={<OAuthCallbackHandler />} />
+          <Route
+            path="/*"
+            element={<MainApp location={window.location} />}
+          />
+        </Routes>
+      </Router>
+    </ShogunButtonProvider>
+  );
 }
 
 export default App;
