@@ -140,8 +140,8 @@ const MainApp = ({ location }) => {
           <div className="text-xs text-gray-500">
             <p>Shogun Auth - Decentralized Authentication System</p>
             <p>
-              This application showcases various authentication methods including
-              WebAuthn, Web3, Nostr, and OAuth.
+              This application showcases various authentication methods
+              including WebAuthn, Web3, Nostr, and OAuth.
             </p>
             <p className="mt-2">
               <strong>Security Notice:</strong> All authentication is handled
@@ -178,8 +178,12 @@ function App() {
       try {
         // Initialize ShogunCore with all plugins
         const shogun = new ShogunCore({
-          authToken: "francos88",
-          peers: ["wss://ruling-mastodon-improved.ngrok-free.app/gun"],
+          authToken: import.meta.env.VITE_AUTH_TOKEN,
+          peers: [
+            "wss://relay.shogun-eco.xyz/gun",
+            "https://peer.wallie.io/gun",
+            "https://gun-manhattan.herokuapp.com/gun",
+          ],
           webauthn: { enabled: true },
           web3: { enabled: true },
           nostr: { enabled: true },
@@ -216,7 +220,11 @@ function App() {
         showWebauthn: true,
         showNostr: true,
         showOauth: !!import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        peers: ["wss://ruling-mastodon-improved.ngrok-free.app/gun"],
+        peers: [
+          "wss://relay.shogun-eco.xyz/gun",
+          "https://peer.wallie.io/gun",
+          "https://gun-manhattan.herokuapp.com/gun",
+        ],
         webauthn: { enabled: true },
         web3: { enabled: true },
         nostr: { enabled: true },
@@ -232,10 +240,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/auth/callback" element={<OAuthCallbackHandler />} />
-          <Route
-            path="/*"
-            element={<MainApp location={window.location} />}
-          />
+          <Route path="/*" element={<MainApp location={window.location} />} />
         </Routes>
       </Router>
     </ShogunButtonProvider>
