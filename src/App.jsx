@@ -27,7 +27,7 @@ import "./index.css"; // Import Tailwind CSS
 // Main component che usa direttamente il context auth
 const MainApp = ({ location }) => {
   // PRIMA DI OGNI USO: chiama useShogun
-  const { isLoggedIn, userPub, username, logout } = useShogun();
+  const { isLoggedIn, userPub, username, logout, sdk } = useShogun();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const redirectUrl = searchParams.get("redirect");
@@ -37,29 +37,80 @@ const MainApp = ({ location }) => {
   const authSuccessShown = useRef(false);
   const redirectAttempted = useRef(false);
 
+  // Listen for auth updates from OAuth callback
+  useEffect(() => {
+    if (!sdk) return;
+
+    const handleAuthUpdate = (authData) => {
+      console.log("📡 Received auth:updated event:", authData);
+    };
+
+    sdk.on("auth:updated", handleAuthUpdate);
+
+    return () => {
+      sdk.off("auth:updated", handleAuthUpdate);
+    };
+  }, [sdk]);
+
+  // Debug logging for authentication state
+  useEffect(() => {
+    console.log("🔍 MainApp - Auth state changed:", {
+      isLoggedIn,
+      userPub: userPub ? `${userPub.substring(0, 20)}...` : null,
+      username,
+      location: location?.pathname,
+      search: location?.search,
+    });
+  }, [isLoggedIn, userPub, username, location]);
+
   // Load proofs when logged in
   useEffect(() => {
     if (isLoggedIn) {
+      console.log("✅ User is logged in, checking for OAuth success state");
+
       // Show a success message if OAuth login was just completed
       if (location?.state?.authSuccess && !authSuccessShown.current) {
         authSuccessShown.current = true;
-        console.log("OAuth login completed successfully!");
+        console.log("🎉 OAuth login completed successfully!");
         // Here you could show a toast or success alert
       }
+    } else {
+      console.log("❌ User is not logged in");
     }
   }, [isLoggedIn, location, redirectUrl, navigate]);
 
   // If user is not logged in and not showing auth page, show landing page
   if (!isLoggedIn && !showAuth) {
+    // Check if we're coming from OAuth callback
+    const isFromOAuthCallback =
+      location?.pathname === "/" && location?.state?.authSuccess;
+
+    if (isFromOAuthCallback) {
+      console.log(
+        "🔄 Coming from OAuth callback, waiting for auth state to update..."
+      );
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="loading-custom mx-auto mb-4"></div>
+            <p>Completing authentication...</p>
+          </div>
+        </div>
+      );
+    }
+
+    console.log("📄 Showing LandingPage - user not logged in");
     return <LandingPage onShowAuth={() => setShowAuth(true)} />;
   }
 
   // If user is not logged in but showing auth page
   if (!isLoggedIn && showAuth) {
+    console.log("🔐 Showing AuthPage - user not logged in but auth requested");
     return <AuthPage onBackToLanding={() => setShowAuth(false)} />;
   }
 
   // User is logged in - show the original app UI
+  console.log("🏠 Showing main app UI - user is logged in");
   return (
     <div className="min-h-screen">
       <header className="navbar-custom">
@@ -173,20 +224,56 @@ const OAuthCallbackHandler = () => {
 function App() {
   const [shogunInstance, setShogunInstance] = useState(null);
 
+  let redirectUrl;
+
+  if (window.location.hostname === "localhost") {
+    redirectUrl = import.meta.env.VITE_GOOGLE_REDIRECT_URI_LOCAL;
+  } else {
+    redirectUrl = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+  }
+
+  const peers = [
+    "wss://relay.shogun-eco.xyz/gun",
+    "https://peer.wallie.io/gun",
+    "https://gun-manhattan.herokuapp.com/gun",
+    "https://gundb-relay-mlccl.ondigitalocean.app/gun",
+    "https://plankton-app-6qfp3.ondigitalocean.app/",
+    "https://gun.defucc.me/gun",
+    "https://a.talkflow.team/gun",
+    "https://talkflow.team/gun",
+  ];
+
   useEffect(() => {
+    console.log("redirectUrl", redirectUrl);
+
     const initializeShogun = async () => {
       try {
         // Initialize ShogunCore with all plugins
         const shogun = new ShogunCore({
           authToken: import.meta.env.VITE_AUTH_TOKEN,
-          peers: [
-            "wss://relay.shogun-eco.xyz/gun",
-            "https://peer.wallie.io/gun",
-            "https://gun-manhattan.herokuapp.com/gun",
-          ],
+          peers: peers,
           webauthn: { enabled: true },
           web3: { enabled: true },
           nostr: { enabled: true },
+          oauth: {
+            enabled: true,
+            usePKCE: true,
+            allowUnsafeClientSecret: true,
+            stateTimeout: 10 * 60 * 1000,
+            providers: {
+              google: {
+                enabled: true,
+                clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+                clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+                redirectUri: redirectUrl,
+                scope: ["openid", "email", "profile"],
+                authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+                tokenUrl: "https://oauth2.googleapis.com/token",
+                userInfoUrl: "https://www.googleapis.com/oauth2/v2/userinfo",
+                usePKCE: true,
+              },
+            },
+          },
         });
 
         console.log("ShogunCore initialized successfully");
@@ -219,20 +306,27 @@ function App() {
         showMetamask: true,
         showWebauthn: true,
         showNostr: true,
-        showOauth: !!import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        peers: [
-          "wss://relay.shogun-eco.xyz/gun",
-          "https://peer.wallie.io/gun",
-          "https://gun-manhattan.herokuapp.com/gun",
-        ],
+        showOauth: true,
+        peers: peers,
         webauthn: { enabled: true },
         web3: { enabled: true },
         nostr: { enabled: true },
         oauth: {
-          google: {
-            enabled: !!import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            redirectUri: `${window.location.origin}/auth/callback`,
+          enabled: true,
+          usePKCE: true,
+          allowUnsafeClientSecret: true,
+          providers: {
+            google: {
+              enabled: true,
+              clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+              clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
+              redirectUri: redirectUrl,
+              scope: ["openid", "email", "profile"],
+              authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+              tokenUrl: "https://oauth2.googleapis.com/token",
+              userInfoUrl: "https://www.googleapis.com/oauth2/v2/userinfo",
+              usePKCE: true,
+            },
           },
         },
       }}

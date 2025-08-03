@@ -42,7 +42,7 @@ const OAuthCallback = () => {
         state: state ? "present" : "missing",
         error,
         errorDescription,
-        fullUrl: location.search
+        fullUrl: location.search,
       });
 
       // Controlla se c'è un errore OAuth
@@ -70,7 +70,11 @@ const OAuthCallback = () => {
       );
 
       // Usa direttamente il plugin OAuth invece del context
-      const result = await oauthPlugin.handleOAuthCallback(provider, code, state);
+      const result = await oauthPlugin.handleOAuthCallback(
+        provider,
+        code,
+        state
+      );
 
       if (result && result.success) {
         console.log(
@@ -80,6 +84,7 @@ const OAuthCallback = () => {
 
         // Emetti l'evento di aggiornamento auth
         if (sdk.emit) {
+          console.log("📡 Emitting auth:updated event");
           sdk.emit("auth:updated", {
             userPub: result.userPub,
             username: result.user?.username,
@@ -88,7 +93,21 @@ const OAuthCallback = () => {
           });
         }
 
-        navigate("/", { state: { authSuccess: true } });
+        // Forza un aggiornamento dello stato se necessario
+        if (sdk.auth && sdk.auth.updateAuthState) {
+          console.log("🔄 Forcing auth state update");
+          sdk.auth.updateAuthState({
+            isLoggedIn: true,
+            userPub: result.userPub,
+            username: result.user?.username,
+          });
+        }
+
+        // Aggiungi un piccolo delay per assicurarsi che lo stato sia aggiornato
+        setTimeout(() => {
+          console.log("🚀 Navigating to home with auth success state");
+          navigate("/", { state: { authSuccess: true } });
+        }, 100);
       } else {
         throw new Error(result?.error || "Authentication failed");
       }
