@@ -75,6 +75,11 @@
   
   /* Spinner */
   --spinner-bg: rgba(255, 255, 255, 0.1);
+  
+  /* Text colors for dark mode */
+  --color-text: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.6);
+  --color-accent: #4F6BF6;
 }
 
 /* Override DaisyUI light theme with Wormhole light styles */
@@ -105,7 +110,7 @@
   
   /* Card styles */
   --card-bg: var(--color-card-bg-light);
-  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   
   /* Button styles */
   --btn-bg: var(--color-button-light);
@@ -115,7 +120,7 @@
   --border-color: var(--border-light);
   
   /* Navbar */
-  --navbar-bg: rgba(255, 255, 255, 0.8);
+  --navbar-bg: rgba(255, 255, 255, 0.1);
   
   /* Alert colors */
   --alert-error-bg: rgba(229, 57, 53, 0.1);
@@ -123,6 +128,369 @@
   
   /* Spinner */
   --spinner-bg: rgba(26, 26, 46, 0.1);
+  
+  /* Text colors for light mode - ensure readability */
+  --color-text: #1a1a2e;
+  --color-text-secondary: #4a5568;
+  --color-accent: #4F6BF6;
+}
+
+/* Additional custom classes for UsernameViewer */
+.card-custom {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: var(--card-shadow);
+  transition: all 0.2s ease;
+}
+
+.card-custom:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+}
+
+.input-custom {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  color: var(--input-color);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.input-custom:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(79, 107, 246, 0.1);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.label-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Button variants */
+.btn-custom.primary {
+  background: var(--color-accent);
+  color: white;
+  border: none;
+}
+
+.btn-custom.primary:hover {
+  background: var(--color-accent);
+  opacity: 0.9;
+}
+
+.btn-custom.secondary {
+  background: var(--color-button);
+  color: var(--color-text);
+  border: 1px solid var(--border-color);
+}
+
+.btn-custom.secondary:hover {
+  background: var(--color-accent);
+  color: white;
+  border-color: var(--color-accent);
+}
+
+.btn-custom.ghost {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid transparent;
+}
+
+.btn-custom.ghost:hover {
+  background: var(--color-button);
+  border-color: var(--border-color);
+  color: var(--color-text);
+}
+
+.btn-custom.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Badge variants */
+.badge-custom.success {
+  background: var(--alert-success-bg);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+/* Collapse component */
+.collapse {
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.collapse-arrow {
+  position: relative;
+}
+
+.collapse-arrow .collapse-title::after {
+  content: '';
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid currentColor;
+  transition: transform 0.2s ease;
+}
+
+.collapse-arrow[open] .collapse-title::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.collapse-title {
+  padding: 0.75rem 1rem;
+  background: var(--input-bg);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  font-weight: 500;
+}
+
+.collapse-content {
+  padding: 1rem;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Grid utilities */
+.grid {
+  display: grid;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Flex utilities */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.flex-1 {
+  flex: 1 1 0%;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.items-start {
+  align-items: flex-start;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+/* Text utilities */
+.text-center {
+  text-align: center;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+/* Spacing utilities */
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
+.mt-8 {
+  margin-top: 2rem;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.p-6 {
+  padding: 1.5rem;
+}
+
+.py-12 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Display utilities */
+.hidden {
+  display: none;
+}
+
+.block {
+  display: block;
+}
+
+/* Position utilities */
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+/* Transform utilities */
+.transform {
+  transform: translateZ(0);
+}
+
+.-translate-y-1\/2 {
+  transform: translateY(-50%);
+}
+
+/* Overflow utilities */
+.overflow-auto {
+  overflow: auto;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Min width utilities */
+.min-w-0 {
+  min-width: 0px;
+}
+
+/* Animation utilities */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive utilities */
+@media (min-width: 768px) {
+  .md\:flex-row {
+    flex-direction: row;
+  }
+  
+  .md\:items-center {
+    align-items: center;
+  }
+  
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* Base styles */
@@ -154,11 +522,6 @@ body {
   padding: 0.5rem 1rem;
   font-weight: 500;
   font-size: 0.875rem;
-}
-
-.badge-custom.success {
-  background-color: #2a53ad;
-  color: var(--color-success);
 }
 
 .badge-custom.error {
@@ -224,12 +587,6 @@ body {
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* Card overrides */
 .card {
   background-color: var(--card-bg);
@@ -268,6 +625,40 @@ body {
 /* Typography */
 .text-secondary {
   color: var(--color-text-secondary);
+}
+
+/* Additional text utilities for better contrast */
+.text-primary {
+  color: var(--color-text);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+/* Ensure navigation text is readable in both modes */
+.navbar-custom .text-secondary {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* Button text contrast */
+.btn-custom {
+  color: var(--n);
+}
+
+.btn-custom.ghost {
+  color: var(--color-text);
+}
+
+.btn-custom.ghost:hover {
+  color: white;
+}
+
+/* Label text contrast */
+.label-text {
+  color: var(--color-text-secondary);
+  font-weight: 500;
 }
 
 /* Responsive adjustments */

@@ -7,6 +7,7 @@ import {
   useLocation,
   useNavigate,
   useSearchParams,
+  Link,
 } from "react-router-dom";
 import {
   ShogunButtonProvider,
@@ -21,6 +22,7 @@ import { ThemeToggle } from "./components/ui/ThemeToggle";
 import UserInfo from "./components/UserInfo";
 import LandingPage from "./components/LandingPage";
 import AuthPage from "./components/AuthPage";
+import UsernameViewer from "./components/UsernameViewer";
 import logo from "./assets/logo.svg";
 import "./index.css"; // Import Tailwind CSS
 
@@ -109,18 +111,42 @@ const MainApp = ({ location }) => {
     return <AuthPage onBackToLanding={() => setShowAuth(false)} />;
   }
 
+  // Check if we're on the username viewer route
+  const isUsernameViewerRoute = location?.pathname === "/username-viewer";
+
   // User is logged in - show the original app UI
   console.log("🏠 Showing main app UI - user is logged in");
   return (
     <div className="min-h-screen">
       <header className="navbar-custom">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <img src={logo} alt="Shogun Auth" className="w-20 h-20" />
-            auth
-          </h1>
-          <p className="text-secondary">Secure, decentralized authentication</p>
-          <ThemeToggle />
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <img src={logo} alt="Shogun Auth" className="w-20 h-20" />
+              auth
+            </h1>
+            <p className="text-secondary font-medium">
+              Secure, decentralized authentication
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            {/* Navigation Menu */}
+            <nav className="flex gap-2">
+              <Link
+                to="/"
+                className={`btn-custom ${!isUsernameViewerRoute ? "primary" : "ghost"} btn-sm font-medium`}
+              >
+                Home
+              </Link>
+              <Link
+                to="/username-viewer"
+                className={`btn-custom ${isUsernameViewerRoute ? "primary" : "ghost"} btn-sm font-medium`}
+              >
+                Usernames
+              </Link>
+            </nav>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -132,7 +158,7 @@ const MainApp = ({ location }) => {
         </div>
 
         {/* Display redirect notice if applicable */}
-        {isLoggedIn && redirectUrl && (
+        {isLoggedIn && redirectUrl && !isUsernameViewerRoute && (
           <div className="alert-custom">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -154,17 +180,20 @@ const MainApp = ({ location }) => {
           </div>
         )}
 
-        {/* Display user info after login */}
-        {isLoggedIn && (
+        {/* Display user info after login (only on home page) */}
+        {isLoggedIn && !isUsernameViewerRoute && (
           <UserInfo user={{ userPub, username }} onLogout={logout} />
         )}
 
-        {/* Add Encrypted Data Manager when user is logged in (but not if redirecting) */}
-        {isLoggedIn && !redirectUrl && (
+        {/* Add Encrypted Data Manager when user is logged in (but not if redirecting or on username viewer) */}
+        {isLoggedIn && !redirectUrl && !isUsernameViewerRoute && (
           <EncryptedDataManager
             authStatus={{ user: { userPub, username }, isLoggedIn }}
           />
         )}
+
+        {/* Username Viewer Route */}
+        {isLoggedIn && isUsernameViewerRoute && <UsernameViewer />}
 
         {/* Se vuoi gestire errori, aggiungi qui uno stato custom o usa error di useShogun se disponibile */}
       </div>
