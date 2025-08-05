@@ -119,19 +119,19 @@ const MainApp = ({ location }) => {
   return (
     <div className="min-h-screen">
       <header className="navbar-custom">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
+        <div className="container">
+          <div className="logo-section">
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <img src={logo} alt="Shogun Auth" className="w-20 h-20" />
+              <img src={logo} alt="Shogun Auth" className="w-8 h-8" />
               auth
             </h1>
-            <p className="text-secondary font-medium">
+            <p className="tagline text-secondary font-medium">
               Secure, decentralized authentication
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="nav-section">
             {/* Navigation Menu */}
-            <nav className="flex gap-2">
+            <nav className="nav-menu">
               <Link
                 to="/"
                 className={`btn-custom ${!isUsernameViewerRoute ? "primary" : "ghost"} btn-sm font-medium`}

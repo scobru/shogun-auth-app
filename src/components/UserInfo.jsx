@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { gunAvatar } from 'gun-avatar';
+import React, { useState, useMemo } from "react";
+import { gunAvatar } from "gun-avatar";
 
 /**
  * Component to display user information
@@ -15,15 +15,15 @@ const UserInfo = ({ user, onLogout }) => {
   }
 
   const { email, name, picture, oauth, userPub } = user;
-  const displayName = name || email || 'User';
-  
+  const displayName = name || email || "User";
+
   // Create a generated avatar if no picture is available
   const avatarContent = useMemo(() => {
     // If we have a picture from OAuth or directly, use it
     if (picture || oauth?.picture) {
       return <img src={picture || oauth?.picture} alt={displayName} />;
     }
-    
+
     // Use gun-avatar if userPub is available
     if (userPub) {
       try {
@@ -34,10 +34,10 @@ const UserInfo = ({ user, onLogout }) => {
         // Fallback to initials if gun-avatar fails
       }
     }
-    
+
     // Otherwise generate an avatar with initials
     const generateInitials = (name) => {
-      if (!name) return '?';
+      if (!name) return "?";
       const parts = name.split(/\s+/);
       if (parts.length >= 2) {
         return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
@@ -45,19 +45,19 @@ const UserInfo = ({ user, onLogout }) => {
       return name.substring(0, 2).toUpperCase();
     };
     const initials = generateInitials(displayName);
-    
+
     return (
-      <div 
-        style={{ 
-          backgroundColor: '#4F6BF6', // A default color
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          height: '100%',
-          color: '#ffffff',
-          fontSize: '1.5rem',
-          fontWeight: 'bold'
+      <div
+        style={{
+          backgroundColor: "#4F6BF6", // A default color
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+          height: "100%",
+          color: "#ffffff",
+          fontSize: "1.5rem",
+          fontWeight: "bold",
         }}
       >
         {initials}
@@ -70,36 +70,36 @@ const UserInfo = ({ user, onLogout }) => {
   };
 
   const formatDate = (timestamp) => {
-    if (!timestamp) return 'N/A';
+    if (!timestamp) return "N/A";
     return new Date(timestamp).toLocaleString();
   };
 
   return (
     <div className="card bg-base-100 shadow-xl">
       <div className="card-body">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="avatar">
-            <div className="w-16 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
               {avatarContent}
             </div>
           </div>
-          <div>
-            <h2 className="card-title">{displayName}</h2>
-            <p className="text-sm opacity-70">{email}</p>
+          <div className="flex-1 min-w-0">
+            <h2 className="card-title text-lg sm:text-xl">{displayName}</h2>
+            <p className="text-sm opacity-70 break-all">{email}</p>
           </div>
         </div>
 
         <div className="divider"></div>
 
-        <div className="flex justify-between items-center">
-          <button 
-            className="btn btn-sm btn-ghost"
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+          <button
+            className="btn btn-sm btn-ghost order-2 sm:order-1"
             onClick={toggleDetails}
           >
-            {showDetails ? 'Hide Details' : 'Show Details'}
+            {showDetails ? "Hide Details" : "Show Details"}
           </button>
-          <button 
-            className="btn btn-sm btn-error"
+          <button
+            className="btn btn-sm btn-error order-1 sm:order-2"
             onClick={onLogout}
           >
             Logout
@@ -107,30 +107,33 @@ const UserInfo = ({ user, onLogout }) => {
         </div>
 
         {showDetails && (
-          <div className="mt-4 space-y-2 text-sm">
-            <div className="grid grid-cols-2 gap-2">
+          <div className="mt-4 space-y-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <span className="font-semibold">User ID:</span>
-              <span className="truncate">{user.userPub || 'N/A'}</span>
+              <span className="text-break-all long-string-container">
+                {user.userPub || "N/A"}
+              </span>
             </div>
-            
+
             {oauth && (
               <>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <span className="font-semibold">OAuth Provider:</span>
-                  <span>{oauth.provider || 'N/A'}</span>
+                  <span>{oauth.provider || "N/A"}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <span className="font-semibold">OAuth ID:</span>
-                  <span className="truncate">{oauth.id || 'N/A'}</span>
+                  <span className="text-break-all long-string-container">
+                    {oauth.id || "N/A"}
+                  </span>
                 </div>
               </>
             )}
-            
-            <div className="grid grid-cols-2 gap-2">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <span className="font-semibold">Username:</span>
               <span>{user.username}</span>
             </div>
-            
           </div>
         )}
       </div>
@@ -138,4 +141,4 @@ const UserInfo = ({ user, onLogout }) => {
   );
 };
 
-export default UserInfo; 
+export default UserInfo;

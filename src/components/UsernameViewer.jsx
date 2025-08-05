@@ -404,24 +404,24 @@ const UsernameViewer = () => {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-4 sm:p-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
         <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Users className="w-6 h-6" />
+          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6" />
             Protocol Usernames
           </h2>
-          <p className="text-secondary mt-1">
+          <p className="text-secondary mt-1 text-sm sm:text-base">
             View all registered usernames in the Shogun protocol
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             onClick={handleRefresh}
             disabled={isLoading}
-            className="btn-custom primary flex items-center gap-2"
+            className="btn-custom primary flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -433,7 +433,7 @@ const UsernameViewer = () => {
 
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="btn-custom secondary flex items-center gap-2"
+            className="btn-custom secondary flex items-center justify-center gap-2"
           >
             {showAdvanced ? (
               <ChevronUp className="w-4 h-4" />
@@ -454,14 +454,14 @@ const UsernameViewer = () => {
 
       {/* Search Bar */}
       <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <div className="search-container">
+          <Search className="search-icon w-4 h-4" />
           <input
             type="text"
             placeholder="Search usernames or addresses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-custom w-full pl-10"
+            className="search-input"
           />
         </div>
       </div>
@@ -471,7 +471,7 @@ const UsernameViewer = () => {
         <div className="card-custom mb-6">
           <div className="card-body">
             <h3 className="card-title">Advanced Options</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="label">
                   <span className="label-text">Total Loaded</span>
@@ -523,9 +523,9 @@ const UsernameViewer = () => {
                 className={`card-custom ${mapping.isCurrentUser ? "ring-2 ring-primary" : ""}`}
               >
                 <div className="card-body">
-                  <div className="flex items-start gap-4">
+                  <div className="flex flex-col sm:flex-row items-start gap-4 w-full">
                     {/* Avatar */}
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 mx-auto sm:mx-0">
                       <img
                         src={gunAvatar({
                           pub: mapping.userPub || "default",
@@ -549,33 +549,39 @@ const UsernameViewer = () => {
                     </div>
 
                     {/* User Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
+                    <div className="flex-1 min-w-0 w-full">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
                         <h3 className="text-lg font-semibold truncate">
                           {mapping.username || "Unnamed User"}
                         </h3>
                         {mapping.isCurrentUser && (
-                          <span className="badge-custom success text-xs">
+                          <span className="badge-custom success text-xs self-start sm:self-center">
                             You
                           </span>
                         )}
                       </div>
 
                       {/* Public Key */}
-                      <div className="mb-2">
+                      <div className="mb-3 w-full">
                         <label className="label">
                           <span className="label-text text-xs">Public Key</span>
                         </label>
-                        <div className="flex items-center gap-2">
-                          <code className="text-sm bg-base-200 px-2 py-1 rounded flex-1 truncate">
-                            {mapping.userPub && mapping.userPub !== mapping.username ? mapping.userPub : `Key: ${mapping.key}`}
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+                          <code className="public-key flex-1 min-w-0">
+                            {mapping.userPub &&
+                            mapping.userPub !== mapping.username
+                              ? mapping.userPub
+                              : `Key: ${mapping.key}`}
                           </code>
                           <button
-                            onClick={() => copyToClipboard(mapping.userPub || mapping.key)}
-                            className="btn-custom ghost btn-sm"
+                            onClick={() =>
+                              copyToClipboard(mapping.userPub || mapping.key)
+                            }
+                            className="btn-custom ghost btn-sm flex-shrink-0"
                             title="Copy public key"
                           >
-                            {copiedAddress === (mapping.userPub || mapping.key) ? (
+                            {copiedAddress ===
+                            (mapping.userPub || mapping.key) ? (
                               <Check className="w-4 h-4 text-success" />
                             ) : (
                               <Copy className="w-4 h-4" />
@@ -586,21 +592,19 @@ const UsernameViewer = () => {
 
                       {/* Encryption Public Key */}
                       {mapping.userEpub && mapping.userEpub.trim() && (
-                        <div className="mb-2">
+                        <div className="mb-3 w-full">
                           <label className="label">
                             <span className="label-text text-xs">
                               Encryption Key
                             </span>
                           </label>
-                          <div className="flex items-center gap-2">
-                            <code className="text-sm bg-base-200 px-2 py-1 rounded flex-1 truncate">
-                              {mapping.userEpub.length > 20
-                                ? `${mapping.userEpub.substring(0, 20)}...`
-                                : mapping.userEpub}
+                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+                            <code className="public-key flex-1 min-w-0">
+                              {mapping.userEpub}
                             </code>
                             <button
                               onClick={() => copyToClipboard(mapping.userEpub)}
-                              className="btn-custom ghost btn-sm"
+                              className="btn-custom ghost btn-sm flex-shrink-0"
                               title="Copy encryption key"
                             >
                               {copiedAddress === mapping.userEpub ? (
@@ -616,13 +620,13 @@ const UsernameViewer = () => {
                       {/* Metadata */}
                       {mapping.metadata &&
                         Object.keys(mapping.metadata).length > 0 && (
-                          <div className="mt-2">
+                          <div className="mt-3">
                             <details className="collapse collapse-arrow bg-base-200">
                               <summary className="collapse-title text-sm font-medium">
                                 Metadata
                               </summary>
                               <div className="collapse-content">
-                                <pre className="text-xs overflow-auto">
+                                <pre className="text-xs overflow-auto max-h-32">
                                   {safeRender(mapping.metadata)}
                                 </pre>
                               </div>
@@ -644,7 +648,7 @@ const UsernameViewer = () => {
           <button
             onClick={handleLoadMore}
             disabled={pagination.isLoadingMore}
-            className="btn-custom primary"
+            className="btn-custom primary w-full sm:w-auto"
           >
             {pagination.isLoadingMore ? (
               <>
@@ -659,7 +663,7 @@ const UsernameViewer = () => {
       )}
 
       {/* Stats */}
-      <div className="mt-8 text-center text-sm text-secondary">
+      <div className="mt-8 text-center text-sm text-secondary px-4">
         <p>
           Showing {filteredMappings.length} of {usernameMappings.length}{" "}
           usernames
