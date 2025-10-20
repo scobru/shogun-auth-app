@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import tailwindcss from '@tailwindcss/vite';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
   // Base configuration
@@ -60,19 +61,42 @@ export default defineConfig({
   },
 
   // Plugins
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(), 
+    tailwindcss(),
+    nodePolyfills({
+      // Include polyfills for specific globals and modules
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
+      // Enable polyfills for specific Node.js modules
+      protocolImports: true,
+    }),
+  ],
 
   // Resolve configuration
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      buffer: 'buffer',
+      stream: 'stream-browserify',
+      crypto: 'crypto-browserify',
+      util: 'util',
+      process: 'process/browser',
     },
   },
 
   // Optimizations
   optimizeDeps: {
-    include: ["gun", "uuid", "shogun-core"],
+    include: ["gun", "uuid", "shogun-core", "buffer", "process"],
     exclude: [],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis'
+      },
+    },
   },
 
   // Define global constants
@@ -80,6 +104,7 @@ export default defineConfig({
     __DEV__: JSON.stringify(process.env.NODE_ENV === "development"),
     __VERSION__: JSON.stringify(process.env.npm_package_version),
     global: "globalThis",
+    "process.env": {},
   },
 
   // Prevent conflicts with wallet extensions

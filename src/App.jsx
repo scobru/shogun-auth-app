@@ -12,19 +12,14 @@ import {
   ShogunButtonProvider,
   ShogunButton,
   useShogun,
+  shogunConnector,
 } from "shogun-button-react";
 
-// import Gun from "gun"
-// import "gun/sea"
-
-// import { useShogunAuth } from "./hooks/useShogunAuth.js";
-import { ShogunCore } from "shogun-core";
-import OAuthCallback from "./components/OAuthCallback";
 import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
-import { truncate } from "./utils/string.js";
 import UserInfo from "./components/UserInfo";
 import logo from "./assets/logo.svg";
+
 import "./index.css"; // Import Tailwind CSS
 
 // Main component che usa direttamente il context auth
@@ -37,7 +32,6 @@ const MainApp = ({ shogun, gunInstance, location }) => {
 
   // Reference to track if a success message has been shown
   const authSuccessShown = useRef(false);
-  const redirectAttempted = useRef(false);
 
   // Load proofs when logged in
   useEffect(() => {
@@ -175,7 +169,6 @@ function ShogunApp({ shogun }) {
     appName: "Shogun Auth App",
     shogun,
     authMethods: [
-      { type: "oauth", provider: "google" },
       { type: "password" },
       { type: "webauthn" },
       { type: "web3" },
@@ -214,10 +207,12 @@ function ShogunApp({ shogun }) {
   const providerOptions = {
     appName: appOptions.appName,
     theme: appOptions.theme,
-    showOauth: false,
     showWebauthn: true,
     showMetamask: true,
     showNostr: true,
+    showZkProof: true,
+    enableGunDebug: true,
+    enableConnectionMonitoring: true,
   };
 
   // Debug provider options
@@ -225,14 +220,13 @@ function ShogunApp({ shogun }) {
   console.log("Shogun SDK plugins:", {
     web3: shogun?.hasPlugin("web3"),
     webauthn: shogun?.hasPlugin("webauthn"),
-    oauth: shogun?.hasPlugin("oauth"),
     nostr: shogun?.hasPlugin("nostr"),
   });
 
   return (
     <Router>
       <ShogunButtonProvider
-        sdk={shogun}
+        core={shogun}
         options={providerOptions}
         onLoginSuccess={handleLoginSuccess}
         onSignupSuccess={handleLoginSuccess}
@@ -240,10 +234,6 @@ function ShogunApp({ shogun }) {
         onError={handleError}
       >
         <Routes>
-          <Route
-            path="/auth/callback"
-            element={<OAuthCallback shogun={shogun} />}
-          />
           <Route
             path="/"
             element={
@@ -262,67 +252,71 @@ function ShogunApp({ shogun }) {
 
 function App() {
   const [sdk, setSdk] = useState(null);
+  const [relays, setRelays] = useState([]);
+  const [isLoadingRelays, setIsLoadingRelays] = useState(true);
 
-  const relays = [
-    "wss://ruling-mastodon-improved.ngrok-free.app/gun",
-    "https://gun-manhattan.herokuapp.com/gun",
-    "https://peer.wallie.io/gun",
-  ];
-
+  // First effect: fetch relays asynchronously
   useEffect(() => {
-    // Set up Gun middleware for headers
-    /* Gun.on('opt', function (ctx) {
-      if (ctx.once) {
-        return
+    async function fetchRelays() {
+      try {
+        setIsLoadingRelays(true);
+        const fetchedRelays = await window.ShogunRelays.getRelays();
+        console.log("Fetched relays:", fetchedRelays);
+
+        // Use fetched relays, or fallback to default if empty
+        const peersToUse =
+          fetchedRelays && fetchedRelays.length > 0
+            ? fetchedRelays
+            : ["https://peer.wallie.io/gun"];
+
+        setRelays(peersToUse);
+      } catch (error) {
+        console.error("Error fetching relays:", error);
+        // Fallback to default peer
+        setRelays(["https://peer.wallie.io/gun"]);
+      } finally {
+        setIsLoadingRelays(false);
       }
-      ctx.on('out', function (msg) {
-        var to = this.to
-        // Adds headers for put
-        msg.headers = {
-          token: import.meta.env.VITE_GUN_TOKEN,
-          Authorization: 'Bearer ' + import.meta.env.VITE_GUN_TOKEN
-        }
-        to.next(msg) // pass to next middleware
-      })
-    }) */
+    }
 
-    // Create the Gun instance
-    // const gunInstance = new Gun({
-    //   peers: relays,
-    //   localStorage: false,
-    //   radisk: false,
-    // });
+    fetchRelays();
+  }, []);
 
-    // Create ShogunCore with the Gun instance and specify scope
-    const shogunCore = new ShogunCore({
-      // gunInstance: gunInstance,
-      appToken: import.meta.env.VITE_APP_TOKEN,
-      authToken: import.meta.env.VITE_GUN_TOKEN,
-      peers: relays,
-      scope: "shogun", // Use scope instead of getting a chain node
+  // Second effect: initialize ShogunCore only after relays are loaded
+  useEffect(() => {
+    if (isLoadingRelays || relays.length === 0) {
+      return; // Wait for relays to be loaded
+    }
+
+    // Use shogunConnector to initialize ShogunCore with fetched relays
+    const { core: shogunCore } = shogunConnector({
+      gunOptions: {
+        peers: relays,  
+        localStorage: false,
+        radisk: false,
+        wire:true,
+        axe:true,
+        rfs:true,
+        wait:500,
+        webrtc:true,
+        chunk:1000,
+        pack:1000,
+        jsonify:true,
+      },
+      appName: "Shogun Auth App",
       web3: { enabled: true },
       webauthn: {
         enabled: true,
         rpName: "Shogun Auth App",
       },
       nostr: { enabled: true },
-      oauth: {
-        enabled: false,
-        usePKCE: true,
-        allowUnsafeClientSecret: true,
-        providers: {
-          google: {
-            enabled: true,
-            clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET,
-            redirectUri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
-            scope: ["openid", "email", "profile"],
-            authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
-            tokenUrl: "https://oauth2.googleapis.com/token",
-            userInfoUrl: "https://www.googleapis.com/oauth2/v2/userinfo",
-          },
-        },
-      },
+      zkproof: { enabled: true },
+      showWebauthn: true,
+      showNostr: true,
+      showMetamask: true,
+      showZkProof: true,
+      enableGunDebug: true,
+      enableConnectionMonitoring: true,
     });
 
     // Add debug methods to window for testing
@@ -331,18 +325,25 @@ function App() {
         clearAllData: () => shogunCore.clearAllStorageData(),
         sdk: shogunCore,
         gun: shogunCore.gun,
+        relays: relays,
       };
+
+      window.gun = shogunCore.gun;
       console.log("Debug methods available at window.shogunDebug");
       console.log("Available debug methods:", Object.keys(window.shogunDebug));
+      console.log("Initialized with relays:", relays);
     }
 
     setSdk(shogunCore);
-  }, []); // Empty dependency array to run only once
+  }, [relays, isLoadingRelays]);
 
-  if (!sdk) {
+  if (isLoadingRelays || !sdk) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen flex-col gap-4">
         <span className="loading loading-lg"></span>
+        <p className="text-secondary">
+          {isLoadingRelays ? "Loading relays..." : "Initializing Shogun..."}
+        </p>
       </div>
     );
   }

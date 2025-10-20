@@ -32,7 +32,7 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
       await new Promise(async (resolve) => {
         const data = {};
 
-        const userData = await shogun.gundb.getUserData("shogun/encryptedData");
+        const userData = await shogun.db.user.get("shogun/encryptedData");
 
         // Handle userData as an object rather than an array
         if (userData) {
@@ -73,17 +73,15 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
       const user = shogun.gun.user();
 
       // Encrypt data using SEA
-      const encryptedValue = await shogun.gundb.encrypt(
+      const encryptedValue = await shogun.db.crypto.encrypt(
         dataValue,
         shogun.user.pair()
       );
 
       
 
-      await shogun.gundb.putUserData(
-        "shogun/encryptedData/" + dataKey,
-        encryptedValue
-      );
+      await shogun.db.user.get("shogun/encryptedData").get(dataKey).put(encryptedValue);
+      
 
 
       // Save to user's space
@@ -124,7 +122,7 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
   const handleDecrypt = async (key) => {
     try {
       const encryptedValue = storedData[key];
-      const decrypted = await shogun.gundb.decrypt(
+      const decrypted = await shogun.db.crypto.decrypt(
         encryptedValue,
         shogun.user.pair()
       );

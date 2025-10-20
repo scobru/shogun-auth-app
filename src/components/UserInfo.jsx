@@ -14,14 +14,14 @@ const UserInfo = ({ user, onLogout }) => {
     return null;
   }
 
-  const { email, name, picture, oauth, userPub } = user;
+  const { email, name, picture, userPub } = user;
   const displayName = name || email || 'User';
   
   // Create a generated avatar if no picture is available
   const avatarContent = useMemo(() => {
-    // If we have a picture from OAuth or directly, use it
-    if (picture || oauth?.picture) {
-      return <img src={picture || oauth?.picture} alt={displayName} />;
+    // If we have a picture, use it
+    if (picture) {
+      return <img src={picture} alt={displayName} />;
     }
     
     // Use gun-avatar if userPub is available
@@ -63,7 +63,7 @@ const UserInfo = ({ user, onLogout }) => {
         {initials}
       </div>
     );
-  }, [picture, oauth?.picture, userPub, displayName]);
+  }, [picture, userPub, displayName]);
 
   const toggleDetails = () => {
     setShowDetails(!showDetails);
@@ -112,19 +112,6 @@ const UserInfo = ({ user, onLogout }) => {
               <span className="font-semibold">User ID:</span>
               <span className="truncate">{user.userPub || 'N/A'}</span>
             </div>
-            
-            {oauth && (
-              <>
-                <div className="grid grid-cols-2 gap-2">
-                  <span className="font-semibold">OAuth Provider:</span>
-                  <span>{oauth.provider || 'N/A'}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <span className="font-semibold">OAuth ID:</span>
-                  <span className="truncate">{oauth.id || 'N/A'}</span>
-                </div>
-              </>
-            )}
             
             <div className="grid grid-cols-2 gap-2">
               <span className="font-semibold">Username:</span>

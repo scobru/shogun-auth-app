@@ -25,8 +25,7 @@ export const useShogunAuth = (shogun) => {
       Object.keys(localStorage).forEach(key => {
         if (key.includes('gun/') || key.includes('gun-') || 
             key.includes('user') || key.includes('pair') || 
-            key.includes('oauth') || key.includes(username) ||
-            key.includes('radata')) {
+            key.includes(username) || key.includes('radata')) {
           console.log(`[${new Date().toISOString()}] Removing localStorage key: ${key}`);
           localStorage.removeItem(key);
         }
@@ -36,7 +35,7 @@ export const useShogunAuth = (shogun) => {
       Object.keys(sessionStorage).forEach(key => {
         if (key.includes('gun/') || key.includes('gun-') || 
             key.includes('user') || key.includes('pair') || 
-            key.includes('oauth') || key.includes(username)) {
+            key.includes(username)) {
           console.log(`[${new Date().toISOString()}] Removing sessionStorage key: ${key}`);
           sessionStorage.removeItem(key);
         }
@@ -219,15 +218,14 @@ export const useShogunAuth = (shogun) => {
       Object.keys(localStorage).forEach(key => {
         if (key.includes('gun/') || key.includes('gun-') || 
             key.includes('user') || key.includes('pair') || 
-            key.includes('oauth') || key.includes('radata')) {
+            key.includes('radata')) {
           localStorage.removeItem(key);
         }
       });
       
       Object.keys(sessionStorage).forEach(key => {
         if (key.includes('gun/') || key.includes('gun-') || 
-            key.includes('user') || key.includes('pair') || 
-            key.includes('oauth')) {
+            key.includes('user') || key.includes('pair')) {
           sessionStorage.removeItem(key);
         }
       });
@@ -238,34 +236,6 @@ export const useShogunAuth = (shogun) => {
     } catch (err) {
       console.error(`[${new Date().toISOString()}] Logout error:`, err);
       return { success: false, error: err.message };
-    }
-  }, [shogun]);
-  
-  /**
-   * Handles OAuth authentication
-   * @param {string} provider - The OAuth provider (e.g., 'google')
-   */
-  const oauthLogin = useCallback(async (provider) => {
-    if (!shogun) {
-      setError("Shogun SDK not available");
-      return;
-    }
-    
-    try {
-      const oauthPlugin = shogun.getPlugin('oauth');
-      if (!oauthPlugin) {
-        throw new Error("OAuth plugin not available");
-      }
-      
-      console.log(`[${new Date().toISOString()}] Initiating OAuth login with ${provider}`);
-      
-      // Start the OAuth flow
-      await oauthPlugin.startOAuth(provider);
-      
-      // The flow will continue in the OAuthCallback component
-    } catch (err) {
-      console.error(`[${new Date().toISOString()}] OAuth login error:`, err);
-      setError(err.message || `Failed to start ${provider} authentication`);
     }
   }, [shogun]);
   
@@ -341,7 +311,6 @@ export const useShogunAuth = (shogun) => {
     login,
     register,
     logout,
-    oauthLogin,
     cleanupUserData
   };
 };
