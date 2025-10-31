@@ -12,8 +12,9 @@ import {
   ShogunButtonProvider,
   ShogunButton,
   useShogun,
-  shogunConnector,
 } from "shogun-button-react";
+import { shogunConnector } from "shogun-button-react";
+import Gun from "gun";
 
 import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
@@ -21,6 +22,7 @@ import UserInfo from "./components/UserInfo";
 import logo from "./assets/logo.svg";
 
 import "./index.css"; // Import Tailwind CSS
+import "shogun-relays";
 
 // Main component che usa direttamente il context auth
 const MainApp = ({ shogun, gunInstance, location }) => {
@@ -173,6 +175,7 @@ function ShogunApp({ shogun }) {
       { type: "webauthn" },
       { type: "web3" },
       { type: "nostr" },
+      { type: "zkproof" },
     ],
     theme: "dark",
   };
@@ -221,6 +224,7 @@ function ShogunApp({ shogun }) {
     web3: shogun?.hasPlugin("web3"),
     webauthn: shogun?.hasPlugin("webauthn"),
     nostr: shogun?.hasPlugin("nostr"),
+    zkproof: shogun?.hasPlugin("zkproof"),
   });
 
   return (
@@ -239,7 +243,7 @@ function ShogunApp({ shogun }) {
             element={
               <MainAppWithLocation
                 shogun={shogun}
-                gunInstance={shogun?.gundb?.gun}
+                gunInstance={shogun?.gun}
               />
             }
           />
@@ -260,14 +264,15 @@ function App() {
     async function fetchRelays() {
       try {
         setIsLoadingRelays(true);
-        const fetchedRelays = await window.ShogunRelays.getRelays();
+        const fetchedRelays = await window.ShogunRelays.forceListUpdate();
+
         console.log("Fetched relays:", fetchedRelays);
 
         // Use fetched relays, or fallback to default if empty
         const peersToUse =
           fetchedRelays && fetchedRelays.length > 0
             ? fetchedRelays
-            : ["https://peer.wallie.io/gun"];
+            : ["https://5eh4twk2f62autunsje4panime.srv.us//gun"];
 
         setRelays(peersToUse);
       } catch (error) {
@@ -288,53 +293,84 @@ function App() {
       return; // Wait for relays to be loaded
     }
 
-    // Use shogunConnector to initialize ShogunCore with fetched relays
-    const { core: shogunCore } = shogunConnector({
-      gunOptions: {
-        peers: relays,  
+    console.log("relays", relays);
+
+    // Use shogunConnector to initialize ShogunCore with backward compatible configuration
+    const initShogun = async () => {
+      const gun = Gun({
+        peers: relays,
         localStorage: false,
         radisk: false,
-        wire:true,
-        axe:true,
-        rfs:true,
-        wait:500,
-        webrtc:true,
-        chunk:1000,
-        pack:1000,
-        jsonify:true,
-      },
-      appName: "Shogun Auth App",
-      web3: { enabled: true },
-      webauthn: {
-        enabled: true,
-        rpName: "Shogun Auth App",
-      },
-      nostr: { enabled: true },
-      zkproof: { enabled: true },
-      showWebauthn: true,
-      showNostr: true,
-      showMetamask: true,
-      showZkProof: true,
-      enableGunDebug: true,
-      enableConnectionMonitoring: true,
-    });
+      });
 
-    // Add debug methods to window for testing
-    if (typeof window !== "undefined") {
-      window.shogunDebug = {
-        clearAllData: () => shogunCore.clearAllStorageData(),
-        sdk: shogunCore,
-        gun: shogunCore.gun,
-        relays: relays,
-      };
+      const { core: shogunCore } = await shogunConnector({
+        appName: "Shogun Auth App",
+        // Pass explicit Gun instance
+        gunInstance: gun,
+        // Authentication method configurations
+        web3: { enabled: true },
+        webauthn: {
+          enabled: true,
+          rpName: "Shogun Auth App",
+        },
+        nostr: { enabled: true },
+        zkproof: { enabled: true },
+        // UI feature toggles
+        showWebauthn: true,
+        showNostr: true,
+        showMetamask: true,
+        showZkProof: true,
+        // Advanced features (carried through options)
+        enableGunDebug: true,
+        enableConnectionMonitoring: true,
+        defaultPageSize: 20,
+        connectionTimeout: 10000,
+        debounceInterval: 100,
+        
+      });
 
-      window.gun = shogunCore.gun;
-      console.log("Debug methods available at window.shogunDebug");
-      console.log("Available debug methods:", Object.keys(window.shogunDebug));
-      console.log("Initialized with relays:", relays);
-    }
+      // Add debug methods to window for testing
+      if (typeof window !== "undefined") {
+        // Wait a bit for Gun to initialize
+        setTimeout(() => {
+          console.log("ShogunCore after initialization:", shogunCore);
+          const gunInstance = shogunCore.gun;
+          console.log("Gun instance found:", gunInstance);
+          console.log("Database details:", {
+            db: shogunCore.db,
+            dbGun: shogunCore.db?.gun,
+            gun: shogunCore.gun,
+          });
+          
+          window.shogunDebug = {
+            clearAllData: () => {
+              // clearAllStorageData has been removed from shogun-core
+              // Use storage.clearAll() or manually clear sessionStorage/localStorage if needed
+              if (shogunCore.storage) {
+                shogunCore.storage.clearAll();
+              }
+              // Also clear Gun session data
+              if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem('gunSessionData');
+              }
+            },
+            sdk: shogunCore,
+            gun: gunInstance,
+            relays: relays,
+          };
 
-    setSdk(shogunCore);
+          window.gun = gunInstance;
+          window.shogun = shogunCore;
+          console.log("Debug methods available at window.shogunDebug");
+          console.log("Available debug methods:", Object.keys(window.shogunDebug));
+          console.log("Initialized with relays:", relays);
+        }, 1000);
+      }
+
+      setSdk(shogunCore);
+    };
+
+    initShogun();
   }, [relays, isLoadingRelays]);
 
   if (isLoadingRelays || !sdk) {

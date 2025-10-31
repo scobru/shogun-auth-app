@@ -52,11 +52,18 @@ export default defineConfig({
       input: {
         main: "index.html",
       },
-      output: {
-        manualChunks: {
-          vendor: ["gun", "shogun-core"],
-        },
+      external: (id) => {
+        // Make Gun external to avoid bundling issues
+        if (id === 'gun' || id === 'gun/sea') {
+          return true;
+        }
+        return false;
       },
+      // output: {
+      //   manualChunks: {
+      //     vendor: ["gun", "shogun-core"],
+      //   },
+      // },
     },
   },
 
@@ -90,8 +97,8 @@ export default defineConfig({
 
   // Optimizations
   optimizeDeps: {
-    include: ["gun", "uuid", "shogun-core", "buffer", "process"],
-    exclude: [],
+    include: [ "uuid", "buffer", "process", "shogun-core"],
+    exclude: ["shogun-button-react"],
     esbuildOptions: {
       define: {
         global: 'globalThis'
@@ -105,6 +112,7 @@ export default defineConfig({
     __VERSION__: JSON.stringify(process.env.npm_package_version),
     global: "globalThis",
     "process.env": {},
+    "process.env.SKIP_CRYPTO_GENERATION": JSON.stringify("1"),
   },
 
   // Prevent conflicts with wallet extensions

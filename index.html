@@ -82,22 +82,31 @@
       
       // Aggressive approach to handle the ethereum property
       try {
-        // Define property with getter/setter to intercept all future attempts
-        Object.defineProperty(window, 'ethereum', {
-          configurable: true,
-          enumerable: true,
-          get: function() {
-            return ethereumProxy;
-          },
-          set: function(newProvider) {
-            console.log('Intercepted ethereum provider assignment');
-            if (newProvider && !window._ethereumProviders.includes(newProvider)) {
-              window._ethereumProviders.push(newProvider);
+        const desc = Object.getOwnPropertyDescriptor(window, 'ethereum');
+        const canRedefine = !desc || desc.configurable === true;
+        if (canRedefine) {
+          // Define property with getter/setter to intercept all future attempts
+          Object.defineProperty(window, 'ethereum', {
+            configurable: true,
+            enumerable: true,
+            get: function() {
+              return ethereumProxy;
+            },
+            set: function(newProvider) {
+              console.log('Intercepted ethereum provider assignment');
+              if (newProvider && !window._ethereumProviders.includes(newProvider)) {
+                window._ethereumProviders.push(newProvider);
+              }
+              // Always maintain the proxy as the returned value
+              return ethereumProxy;
             }
-            // Always maintain the proxy as the returned value
-            return ethereumProxy;
+          });
+        } else {
+          // If not configurable, do not redefine; just ensure we keep track of it
+          if (existingEthereum && !window._ethereumProviders.includes(existingEthereum)) {
+            window._ethereumProviders.push(existingEthereum);
           }
-        });
+        }
         
         console.log('Successfully installed ethereum protection layer');
         

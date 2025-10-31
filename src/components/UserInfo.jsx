@@ -14,8 +14,8 @@ const UserInfo = ({ user, onLogout }) => {
     return null;
   }
 
-  const { email, name, picture, userPub } = user;
-  const displayName = name || email || 'User';
+  const { email, name, picture, userPub, username } = user;
+  const displayName = name || username || email || 'User';
   
   // Create a generated avatar if no picture is available
   const avatarContent = useMemo(() => {
@@ -85,7 +85,7 @@ const UserInfo = ({ user, onLogout }) => {
           </div>
           <div>
             <h2 className="card-title">{displayName}</h2>
-            <p className="text-sm opacity-70">{email}</p>
+            <p className="text-sm opacity-70">{email || username}</p>
           </div>
         </div>
 

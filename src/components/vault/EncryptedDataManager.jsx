@@ -23,16 +23,25 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
       setLoading(true);
       setError(null);
 
-      // const user = shogun.gun.user();
-
       // Clear previous data
       setStoredData({});
 
-      // Load data from Gun
+      // Load data from Gun using new ShogunCore API
       await new Promise(async (resolve) => {
         const data = {};
 
-        const userData = await shogun.db.user.get("shogun/encryptedData");
+        // Use shogun.gun.user() to access the current user
+        const user = shogun.gun.user();
+        if (!user || !user.is) {
+          resolve();
+          return;
+        }
+
+        const userData = await new Promise((resolveData) => {
+          user.get("shogun/encryptedData").once((data) => {
+            resolveData(data);
+          });
+        });
 
         // Handle userData as an object rather than an array
         if (userData) {
@@ -70,33 +79,28 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
     setError("");
 
     try {
+      // Get current user and pair
       const user = shogun.gun.user();
+      if (!user || !user.is) {
+        throw new Error("User not logged in");
+      }
 
-      // Encrypt data using SEA
-      const encryptedValue = await shogun.db.crypto.encrypt(
-        dataValue,
-        shogun.user.pair()
-      );
+      // Get user pair from Gun user instance
+      const pair = (user._?.sea || user.is?.sea) || null;
+      if (!pair) {
+        throw new Error("User pair not available");
+      }
 
-      
+      // Encrypt data using SEA from db.sea
+      const SEA = shogun.db.sea || shogun.gun.SEA || window.SEA;
+      if (!SEA) {
+        throw new Error("SEA not available");
+      }
 
-      await shogun.db.user.get("shogun/encryptedData").get(dataKey).put(encryptedValue);
-      
+      const encryptedValue = await SEA.encrypt(dataValue, pair);
 
-
-      // Save to user's space
-      /* await new Promise((resolve, reject) => {
-        user.get("shogun")
-          .get("encryptedData")
-          .get(dataKey)
-          .put(encryptedValue, (ack) => {
-            if (ack.err) {
-              reject(new Error(ack.err));
-            } else {
-              resolve();
-            }
-          });
-      }); */
+      // Save to user's space using new ShogunCore API
+      user.get("shogun/encryptedData").get(dataKey).put(encryptedValue);
 
       // Update local state
       setStoredData((prev) => ({
@@ -122,10 +126,26 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
   const handleDecrypt = async (key) => {
     try {
       const encryptedValue = storedData[key];
-      const decrypted = await shogun.db.crypto.decrypt(
-        encryptedValue,
-        shogun.user.pair()
-      );
+      
+      // Get current user and pair
+      const user = shogun.gun.user();
+      if (!user || !user.is) {
+        throw new Error("User not logged in");
+      }
+
+      // Get user pair from Gun user instance
+      const pair = (user._?.sea || user.is?.sea) || null;
+      if (!pair) {
+        throw new Error("User pair not available");
+      }
+
+      // Decrypt data using SEA from db.sea
+      const SEA = shogun.db.sea || shogun.gun.SEA || window.SEA;
+      if (!SEA) {
+        throw new Error("SEA not available");
+      }
+
+      const decrypted = await SEA.decrypt(encryptedValue, pair);
 
       setDecryptedData((prev) => ({
         ...prev,
@@ -143,22 +163,12 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
       setLoading(true);
       setError(null);
 
+      // Delete from Gun using new ShogunCore API
       const user = shogun.gun.user();
-
-      // Delete from Gun (set to null)
-      await new Promise((resolve, reject) => {
-        user
-          .get("shogun")
-          .get("encryptedData")
-          .get(key)
-          .put(null, (ack) => {
-            if (ack.err) {
-              reject(new Error(ack.err));
-            } else {
-              resolve();
-            }
-          });
-      });
+      if (!user || !user.is) {
+        throw new Error("User not logged in");
+      }
+      user.get("shogun/encryptedData").get(key).put(null);
 
       // Update local state
       setStoredData((prev) => {
