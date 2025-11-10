@@ -52,13 +52,6 @@ export default defineConfig({
       input: {
         main: "index.html",
       },
-      external: (id) => {
-        // Make Gun external to avoid bundling issues
-        if (id === 'gun' || id === 'gun/sea') {
-          return true;
-        }
-        return false;
-      },
       // output: {
       //   manualChunks: {
       //     vendor: ["gun", "shogun-core"],
