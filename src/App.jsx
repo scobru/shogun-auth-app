@@ -53,7 +53,7 @@ const MainApp = ({ shogun, gunInstance, location }) => {
           <div className="navbar-title">
             <img src={logo} alt="Shogun Auth" className="w-12 h-12" />
             <div>
-              <span className="font-semibold">Shogun Auth</span>
+              <span className="font-semibold">Auth</span>
               <p className="navbar-subtitle">
                 Secure, decentralized authentication
               </p>
