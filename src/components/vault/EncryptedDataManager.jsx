@@ -265,9 +265,11 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
 
           {Object.keys(storedData).length === 0 ? (
             <div className="text-center py-8 bg-base-200 rounded-lg border border-base-300">
-              <span className="text-4xl block mb-3">📭</span>
+              <p className="text-sm uppercase tracking-wide text-secondary mb-2">
+                Encrypted vault is empty
+              </p>
               <p className="text-secondary">
-                No encrypted data stored yet. Add your first entry above.
+                Add your first encrypted entry using the form above.
               </p>
             </div>
           ) : (
@@ -275,45 +277,50 @@ const EncryptedDataManager = ({ shogun, authStatus }) => {
               {Object.keys(storedData).map((key) => (
                 <div className="card" key={key}>
                   <div className="card-body p-4">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-medium text-lg flex items-center gap-2">
-                        <span className="text-sm">🔑</span> {key}
-                      </h4>
-                      <div className="flex gap-2">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div>
+                        <h4 className="font-medium text-lg break-all">
+                          {key}
+                        </h4>
+                        <p className="text-xs text-secondary mt-1">
+                          Encrypted item stored in your vault
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
                         <button
                           className="btn-custom btn-sm"
                           onClick={() => handleDecrypt(key)}
                         >
-                          <span className="text-xs">🔓</span> Decrypt
+                          Decrypt
                         </button>
                         <button
                           className="btn-custom btn-sm"
                           onClick={() => handleDelete(key)}
                         >
-                          <span className="text-xs">🗑️</span> Delete
+                          Delete
                         </button>
                       </div>
                     </div>
 
-                    <div className="mt-3">
-                      <div className="mb-3">
-                        <h5 className="text-sm font-medium mb-1 flex items-center gap-1">
-                          <span className="text-xs">🔒</span> Encrypted Data
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h5 className="text-xs font-medium mb-1 uppercase tracking-wide text-secondary">
+                          Encrypted data (preview)
                         </h5>
-                        <pre className="bg-base-300 p-2 rounded text-xs overflow-x-auto whitespace-pre-wrap">
+                        <pre className="bg-base-300/70 border border-base-300 p-2 rounded text-xs overflow-x-auto whitespace-pre-wrap max-h-40">
                           {typeof storedData[key] === "string"
-                            ? storedData[key].substring(0, 100) +
-                              (storedData[key].length > 100 ? "..." : "")
+                            ? storedData[key].substring(0, 120) +
+                              (storedData[key].length > 120 ? "..." : "")
                             : JSON.stringify(storedData[key], null, 2)}
                         </pre>
                       </div>
 
                       {decryptedData[key] && (
                         <div>
-                          <h5 className="text-sm font-medium mb-1 flex items-center gap-1">
-                            <span className="text-xs">🔓</span> Decrypted Value
+                          <h5 className="text-xs font-medium mb-1 uppercase tracking-wide text-secondary">
+                            Decrypted value
                           </h5>
-                          <pre className="bg-base-300 p-2 rounded text-xs overflow-x-auto whitespace-pre-wrap">
+                          <pre className="bg-base-300/70 border border-base-300 p-2 rounded text-xs overflow-x-auto whitespace-pre-wrap max-h-40">
                             {decryptedData[key]}
                           </pre>
                         </div>

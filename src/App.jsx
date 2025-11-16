@@ -15,7 +15,6 @@ import {
 } from "shogun-button-react";
 import { shogunConnector } from "shogun-button-react";
 import Gun from "gun";
-
 import EncryptedDataManager from "./components/vault/EncryptedDataManager";
 import { ThemeToggle } from "./components/ui/ThemeToggle";
 import UserInfo from "./components/UserInfo";
@@ -48,7 +47,7 @@ const MainApp = ({ shogun, gunInstance, location }) => {
   }, [isLoggedIn, location, redirectUrl, navigate]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen ">
       <header className="navbar-custom">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -60,7 +59,7 @@ const MainApp = ({ shogun, gunInstance, location }) => {
         </div>
       </header>
 
-      <div className="container">
+      <div className="container  mx-auto">
         <div className="flex justify-center mb-6">
           <div className={`badge-custom ${isLoggedIn ? "success" : "error"}`}>
             {isLoggedIn ? "Authenticated" : "Not authenticated"}
@@ -156,6 +155,9 @@ const MainApp = ({ shogun, gunInstance, location }) => {
           </p>
         </div>
       </footer>
+
+      {/* Onion widget anchor (positioned by shogun-onion CSS) */}
+      <div id="shogun-ring"></div>
     </div>
   );
 };
@@ -372,6 +374,74 @@ function App() {
 
     initShogun();
   }, [relays, isLoadingRelays]);
+
+  // Mount Shogun Onion widget (Onion ring) once, after main app is ready
+  useEffect(() => {
+    // Wait until SDK is initialized so the main layout (and #shogun-ring) is rendered
+    if (!sdk) return;
+
+    (async () => {
+      if (typeof window === "undefined" || typeof document === "undefined") {
+        return;
+      }
+
+      try {
+        // Ensure Onion CSS from CDN is present
+        const ensureOnionCss = () => {
+          const existing = document.getElementById("shogun-onion-css");
+          if (existing) return;
+          const link = document.createElement("link");
+          link.id = "shogun-onion-css";
+          link.rel = "stylesheet";
+          link.href = "https://unpkg.com/shogun-onion@0.1.10/onion.css";
+          document.head.appendChild(link);
+        };
+
+        ensureOnionCss();
+
+        // Import only sitesData to avoid touching package entry that references CSS assets
+        const { default: sitesData } = await import("shogun-onion/sitesData.js");
+
+        // Expose globals expected by the onion widget script
+        window.sitesData = sitesData;
+        window.sites = sitesData.map((s) => s.url);
+        window.ringName = "Shogun Network";
+        window.ringID = "shogun-ring";
+        window.useIndex = false;
+        window.indexPage = "#";
+        window.useRandom = true;
+
+        // Ensure anchor exists; if not, create a fallback at the end of body
+        if (!document.getElementById("shogun-ring")) {
+          const anchor = document.createElement("div");
+          anchor.id = "shogun-ring";
+          document.body.appendChild(anchor);
+        }
+
+        // Inject the widget script if not already added
+        await new Promise((resolve, reject) => {
+          if (
+            document.querySelector(
+              'script[data-shogun-onion-widget="true"]'
+            )
+          ) {
+            resolve();
+            return;
+          }
+          const script = document.createElement("script");
+          script.src =
+            "https://unpkg.com/shogun-onion@0.1.10/ring/onionring-widget.js";
+          script.async = true;
+          script.setAttribute("data-shogun-onion-widget", "true");
+          script.onload = () => resolve();
+          script.onerror = (e) => reject(e);
+          document.body.appendChild(script);
+        });
+      } catch (e) {
+        console.error("Failed to mount Shogun Onion widget:", e);
+      }
+    })();
+  }, [sdk]);
 
   if (isLoadingRelays || !sdk) {
     return (
