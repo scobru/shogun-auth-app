@@ -47,28 +47,33 @@ const MainApp = ({ shogun, gunInstance, location }) => {
   }, [isLoggedIn, location, redirectUrl, navigate]);
 
   return (
-    <div className="min-h-screen ">
+    <div className="app-shell">
       <header className="navbar-custom">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <img src={logo} alt="Shogun Auth" className="w-20 h-20" />
-            auth
-          </h1>
-          <p className="text-secondary">Secure, decentralized authentication</p>
+        <div className="navbar-inner">
+          <div className="navbar-title">
+            <img src={logo} alt="Shogun Auth" className="w-12 h-12" />
+            <div>
+              <span className="font-semibold">Shogun Auth</span>
+              <p className="navbar-subtitle">
+                Secure, decentralized authentication
+              </p>
+            </div>
+          </div>
           <ThemeToggle />
         </div>
       </header>
 
-      <div className="container  mx-auto">
+      <main className="app-main">
         <div className="flex justify-center mb-6">
           <div className={`badge-custom ${isLoggedIn ? "success" : "error"}`}>
-            {isLoggedIn ? "Authenticated" : "Not authenticated"}
+            <span className="badge-dot" />
+            <span>{isLoggedIn ? "Authenticated" : "Not authenticated"}</span>
           </div>
         </div>
 
         {/* Display redirect notice if applicable */}
         {isLoggedIn && redirectUrl && (
-          <div className="alert-custom">
+          <div className="alert-custom success">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -91,19 +96,29 @@ const MainApp = ({ shogun, gunInstance, location }) => {
 
         {/* Display user info after login */}
         {isLoggedIn && (
-          <UserInfo user={{ userPub, username }} onLogout={logout} />
+          <div className="mb-6">
+            <UserInfo user={{ userPub, username }} onLogout={logout} />
+          </div>
         )}
 
-        <div className="card mb-6 p-10">
-          <div className="p-6">
-            <h2 className="text-2xl font-semibold mb-6">Authentication</h2>
+        <div className="auth-card card mb-6 p-8">
+          <div className="card-body">
+            <div className="auth-card-header">
+              <div>
+                <h2 className="auth-card-title">Authentication</h2>
+                <p className="auth-card-caption">
+                  Connect with your preferred method and let Shogun handle the
+                  rest.
+                </p>
+              </div>
+            </div>
 
             {/* ShogunButton handles both logged-in and logged-out states, show it unless we're redirecting */}
             {isLoggedIn && redirectUrl ? (
               <div className="flex justify-center">
                 <div className="text-center">
                   <div className="loading-custom mx-auto"></div>
-                  <p className="mt-2 text-secondary">Preparing redirect...</p>
+                  <p className="mt-3 text-secondary">Preparing redirect...</p>
                 </div>
               </div>
             ) : (
@@ -123,35 +138,20 @@ const MainApp = ({ shogun, gunInstance, location }) => {
         )}
 
         {/* Se vuoi gestire errori, aggiungi qui uno stato custom o usa error di useShogun se disponibile */}
-      </div>
+      </main>
 
       {/* Footer */}
-      <footer className="mt-12 py-8 border-t border-border-color bg-base-200/50">
-        <div className="container mx-auto text-center">
-          <p className="text-gray-400 mb-4">
-            <a
-              href="https://github.com/scobru/shogun-auth-app"
-              className="text-blue-500 hover:text-blue-400"
-            >
-              repo
-            </a>
-            {" - "}
-            build with ❤️ by {""}
-            <a
-              href="https://github.com/scobru"
-              className="text-blue-500 hover:text-blue-400"
-            >
-              scobru
-            </a>
+      <footer className="app-footer">
+        <div className="app-footer-inner">
+          <p className="mb-2">
+            <a href="https://github.com/scobru/shogun-auth-app">repo</a>
+            {" · "}
+            built by{" "}
+            <a href="https://github.com/scobru">scobru</a>
           </p>
-          <p className="text-gray-400 mb-4">
-            part of {""}
-            <a
-              href="https://shogun-info.vercel.app"
-              className="text-blue-500 hover:text-blue-400"
-            >
-              shogun project
-            </a>
+          <p>
+            part of{" "}
+            <a href="https://shogun-info.vercel.app">shogun project</a>
           </p>
         </div>
       </footer>
