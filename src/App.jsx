@@ -407,7 +407,7 @@ function App() {
         window.sites = sitesData.map((s) => s.url);
         window.ringName = "Shogun Network";
         window.ringID = "shogun-ring";
-        window.useIndex = false;
+        window.useIndex = true;
         window.indexPage = "#";
         window.useRandom = true;
 
