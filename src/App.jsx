@@ -140,21 +140,6 @@ const MainApp = ({ shogun, gunInstance, location }) => {
         {/* Se vuoi gestire errori, aggiungi qui uno stato custom o usa error di useShogun se disponibile */}
       </main>
 
-      {/* Footer */}
-      <footer className="app-footer">
-        <div className="app-footer-inner">
-          <p className="mb-2">
-            <a href="https://github.com/scobru/shogun-auth-app">repo</a>
-            {" · "}
-            built by{" "}
-            <a href="https://github.com/scobru">scobru</a>
-          </p>
-          <p>
-            part of{" "}
-            <a href="https://shogun-info.vercel.app">shogun project</a>
-          </p>
-        </div>
-      </footer>
 
       {/* Onion widget anchor (positioned by shogun-onion CSS) */}
       <div id="shogun-ring"></div>
@@ -393,7 +378,7 @@ function App() {
           const link = document.createElement("link");
           link.id = "shogun-onion-css";
           link.rel = "stylesheet";
-          link.href = "https://unpkg.com/shogun-onion@0.1.10/onion.css";
+          link.href = "https://unpkg.com/shogun-onion@0.1.16/onion.css";
           document.head.appendChild(link);
         };
 
@@ -430,7 +415,7 @@ function App() {
           }
           const script = document.createElement("script");
           script.src =
-            "https://unpkg.com/shogun-onion@0.1.10/ring/onionring-widget.js";
+            "https://unpkg.com/shogun-onion@0.1.16/ring/onionring-widget.js";
           script.async = true;
           script.setAttribute("data-shogun-onion-widget", "true");
           script.onload = () => resolve();

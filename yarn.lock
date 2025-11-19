@@ -5478,10 +5478,10 @@ shogun-core@^6.4.4, shogun-core@^6.4.5:
     uuid "^11.1.0"
     vm-browserify "^1.1.2"
 
-shogun-onion@^0.1.10:
-  version "0.1.10"
-  resolved "https://registry.yarnpkg.com/shogun-onion/-/shogun-onion-0.1.10.tgz#09a348062ab3a5aad4deea7bf7c69fc088bd6e04"
-  integrity sha512-5MQtre8IAmv7bTYPAVSi7qlcmcGGjJdz7edUn2kgQ+HcuUMNwoZihTZ2nx0VxgUsVoya0nFCUzuSnrGLTY5zcQ==
+shogun-onion@^0.1.16:
+  version "0.1.16"
+  resolved "https://registry.yarnpkg.com/shogun-onion/-/shogun-onion-0.1.16.tgz#f5a427a040f1cb6747ecd48358543c5e57748f22"
+  integrity sha512-9YVn1F6smQShtMQefTYmFRxaZe3ZWq/VIl1NLGNV0i4kBXFziZU06FnVhagqXMmyouvyKmmSWHg8PXZTaZ5sKA==
   dependencies:
     shogun-theme latest
     vercel "^48.10.2"
