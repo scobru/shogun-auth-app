@@ -1,8 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-import shogunConfig from '../shogun-theme/tailwind.config.js';
-
 export default {
-  ...shogunConfig,
   content: [
     './pages/**/*.{js,jsx}',
     './components/**/*.{js,jsx}',
@@ -10,12 +7,12 @@ export default {
     './src/**/*.{js,jsx}',
     './index.html',
   ],
+  plugins: [require('daisyui')],
   daisyui: {
-    ...shogunConfig.daisyui,
-    themes: [
-      "shogun-dark",
-      "shogun-light",
-    ],
-    darkTheme: "shogun-dark",
+    themes: ['dark', 'light'],
+    darkTheme: 'dark',
+    base: true,
+    styled: true,
+    utils: true,
   },
 } 

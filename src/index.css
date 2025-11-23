@@ -1,12 +1,11 @@
-/* === SHOGUN THEME - Import tema condiviso === */
-@import "shogun-theme/styles/variables.css";
-@import "shogun-theme/styles/base.css";
-@import "shogun-theme/styles/daisyui-overrides.css";
-
-@import "shogun-onion/onion.css";
+/* === DAISYUI THEMES - Dark and Light === */
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap");
 
 @import "tailwindcss";
-@plugin "daisyui";
+
+@plugin "daisyui" {
+  themes: "all";
+}
 
 /* === CUSTOM STYLES PER SHOGUN-AUTH-APP === */
 
@@ -15,16 +14,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(circle at top left, rgba(79, 107, 246, 0.14), transparent 55%),
-              radial-gradient(circle at bottom right, rgba(45, 212, 191, 0.1), transparent 55%),
-              var(--body-bg, #020617);
-}
-
-/* Variante più chiara per il tema light */
-[data-theme="light"] .app-shell {
-  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 50%),
-              radial-gradient(circle at bottom right, rgba(45, 212, 191, 0.16), transparent 55%),
-              #f3f4f6;
+  @apply bg-base-100;
 }
 
 .app-shell main {
@@ -46,9 +36,7 @@
 
 /* Header */
 .navbar-custom {
-  background-color: color-mix(in srgb, var(--navbar-bg) 88%, transparent);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border-color);
+  @apply bg-base-200/90 backdrop-blur-lg border-b border-base-content/10;
   padding: 0.85rem 0;
   position: sticky;
   top: 0;
@@ -79,7 +67,7 @@
 
 .navbar-subtitle {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  @apply text-base-content/60;
 }
 
 /* Badge stato autenticazione */
@@ -99,75 +87,41 @@
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 999px;
-  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.7);
+  @apply shadow-[0_0_0_2px_hsl(var(--b1))];
 }
 
 .badge-custom.success {
-  background: rgba(22, 163, 74, 0.12);
-  color: var(--success-color);
+  @apply bg-success/20 text-success border border-success/30;
 }
 
 .badge-custom.success .badge-dot {
-  background: #22c55e;
+  @apply bg-success;
 }
 
 .badge-custom.error {
-  background-color: var(--error-bg);
-  color: var(--error-color);
-  border: 1px solid var(--error-color);
+  @apply bg-error/20 text-error border border-error;
 }
 
 .badge-custom.error .badge-dot {
-  background: var(--error-color);
+  @apply bg-error;
 }
 
 /* Banner redirect / alert */
 .alert-custom {
-  border-radius: var(--shogun-radius-lg, 0.75rem);
-  border: 1px solid transparent;
-  padding: 0.9rem 1rem;
-  margin: 1rem 0 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: rgba(15, 23, 42, 0.7);
-}
-
-[data-theme="light"] .alert-custom {
-  background: #e0edff;
-  border-color: rgba(37, 99, 235, 0.35);
-  color: #1e293b;
+  @apply rounded-lg border border-base-content/20 p-4 my-4 flex items-center gap-3 bg-base-200;
 }
 
 .alert-custom.error {
-  background-color: var(--error-bg);
-  border-color: var(--error-color);
-  color: var(--error-color);
+  @apply bg-error/20 border-error text-error;
 }
 
 .alert-custom.success {
-  background-color: var(--success-bg);
-  border-color: var(--success-color);
-  color: var(--success-color);
+  @apply bg-success/20 border-success text-success;
 }
 
 /* Card principale autenticazione */
 .auth-card {
-  border-radius: 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: linear-gradient(
-      135deg,
-      rgba(15, 23, 42, 0.98),
-      rgba(15, 23, 42, 0.96)
-    );
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.65);
-  color: #e5e7eb;
-}
-
-[data-theme="light"] .auth-card {
-  background: #ffffff;
-  color: #020617;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  @apply rounded-xl border border-base-content/20 bg-base-300 shadow-xl;
 }
 
 .auth-card-header {
@@ -185,53 +139,17 @@
 
 .auth-card-caption {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  @apply text-base-content/60;
 }
 
-/* Pulsanti custom */
+/* Pulsanti custom - usa le classi DaisyUI */
 .btn-custom {
-  background-color: var(--button-bg);
-  border: none;
-  border-radius: var(--shogun-radius-md);
-  color: var(--text-primary);
-  font-weight: 600;
-  text-transform: none;
-  transition: all var(--shogun-transition-base);
-  padding: 0.75rem 1.4rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  font-size: 0.9rem;
+  @apply btn btn-primary;
 }
 
-.btn-custom svg {
-  margin-left: 0.35rem;
-}
-
-.btn-custom:hover {
-  background-color: var(--button-hover);
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.55);
-}
-
-.btn-custom:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-}
-
-/* Loader personalizzato */
+/* Loader personalizzato - usa loading di DaisyUI */
 .loading-custom {
-  width: 2.3rem;
-  height: 2.3rem;
-  border: 3px solid var(--input-bg);
-  border-top-color: var(--shogun-primary);
-  border-radius: 50%;
-  animation: spin 0.9s linear infinite;
+  @apply loading loading-spinner loading-lg;
 }
 
 @keyframes spin {
@@ -242,8 +160,7 @@
 
 /* Footer */
 .app-footer {
-  border-top: 1px solid var(--border-color);
-  background: color-mix(in srgb, var(--navbar-bg) 90%, transparent);
+  @apply border-t border-base-content/10 bg-base-200/90 backdrop-blur-lg;
   margin-top: 3rem;
 }
 
@@ -253,14 +170,21 @@
   padding: 1.75rem 1.5rem 2rem;
   text-align: center;
   font-size: 0.85rem;
-  color: #9ca3af;
+  @apply text-base-content/60;
 }
 
 .app-footer-inner a {
-  color: #60a5fa;
+  @apply text-primary hover:text-primary/80 transition-colors;
 }
 
-.app-footer-inner a:hover {
-  color: #93c5fd;
+/* JetBrains Mono font application */
+body {
+  font-family: 'JetBrains Mono', 'Inter', system-ui, -apple-system, sans-serif;
+  @apply bg-base-100 text-base-content;
+}
+
+/* Use JetBrains Mono for code and monospace contexts */
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 
